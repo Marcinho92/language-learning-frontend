@@ -17,6 +17,9 @@ COPY src/ src/
 # Copy public directory
 COPY public/ public/
 
+# Copy other necessary files
+COPY .env* ./
+
 EXPOSE 3000
 
 CMD ["npm", "start"] 

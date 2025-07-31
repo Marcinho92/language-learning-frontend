@@ -13,8 +13,10 @@ import {
   MenuItem,
   Alert,
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 const WordLearning = () => {
+  const navigate = useNavigate();
   const [currentWord, setCurrentWord] = useState(null);
   const [translation, setTranslation] = useState('');
   const [result, setResult] = useState(null);
@@ -32,11 +34,21 @@ const WordLearning = () => {
       const response = await fetch(`${apiUrl}/api/words/random?${params}`);
 
       if (response.ok) {
-        const word = await response.json();
-        setCurrentWord(word);
-        setTranslation('');
-        setResult(null);
-        setError('');
+        const data = await response.json();
+        
+        // Sprawdź czy backend zwrócił informację o pustej bazie
+        if (data.isEmpty) {
+          setCurrentWord(null);
+          setError(data.message || 'Baza słów jest pusta. Dodaj słowa, aby rozpocząć naukę.');
+          setTranslation('');
+          setResult(null);
+        } else {
+          // Normalne słowo
+          setCurrentWord(data);
+          setTranslation('');
+          setResult(null);
+          setError('');
+        }
       } else {
         const errorData = await response.text();
         setError(errorData || 'Failed to fetch word');
@@ -118,7 +130,21 @@ const WordLearning = () => {
       </Box>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert 
+          severity={error.includes('Baza słów jest pusta') ? 'info' : 'error'} 
+          sx={{ mb: 2 }}
+          action={
+            error.includes('Baza słów jest pusta') && (
+              <Button 
+                color="inherit" 
+                size="small"
+                onClick={() => navigate('/add')}
+              >
+                Dodaj słowo
+              </Button>
+            )
+          }
+        >
           {error}
         </Alert>
       )}
