@@ -27,7 +27,7 @@ const WordLearning = () => {
 
   const fetchRandomWord = useCallback(async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production.up.railway.app';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
       const params = new URLSearchParams();
       if (filters.language) params.append('language', filters.language);
 
@@ -70,7 +70,7 @@ const WordLearning = () => {
     if (!currentWord) return;
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production.up.railway.app';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
       const response = await fetch(
         `${apiUrl}/api/words/${currentWord.id}/check?translation=${encodeURIComponent(translation)}`,
         {

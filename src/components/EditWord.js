@@ -47,7 +47,7 @@ const EditWord = ({ word, open, onClose, onSave }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production.up.railway.app';
+      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
       const response = await fetch(`${apiUrl}/api/words/${word.id}`, {
         method: 'PUT',
         headers: {
