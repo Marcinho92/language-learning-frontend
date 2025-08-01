@@ -13,11 +13,15 @@
 
 ## Krok 3: Konfiguracja
 1. W projekcie Railway przejdź do **"Variables"**
-2. Dodaj zmienną:
+2. Dodaj zmienne:
    - **Key**: `REACT_APP_API_URL`
    - **Value**: `https://language-learning-backend-production-3ce3.up.railway.app`
-   lub przez CLI:
-   railway variables set REACT_APP_API_URL=https://language-learning-backend-production-3ce3.up.railway.app
+   
+   - **Key**: `PORT`
+   - **Value**: `3000`
+   
+   - **Key**: `NODE_OPTIONS`
+   - **Value**: `--max-old-space-size=512`
 
 ## Krok 4: Sprawdzenie
 1. Poczekaj na zakończenie budowania
@@ -30,4 +34,5 @@ Frontend będzie dostępny pod adresem: `https://your-project-name.railway.app`
 ## 🔧 Rozwiązywanie problemów
 - **Błąd budowania**: Sprawdź logi w "Deployments"
 - **Błąd API**: Sprawdź czy backend działa
-- **CORS**: Sprawdź czy backend ma włączone CORS dla domeny Railway 
+- **CORS**: Sprawdź czy backend ma włączone CORS dla domeny Railway
+- **Pamięć**: Zwiększ `NODE_OPTIONS` do `--max-old-space-size=1024` jeśli potrzebne 
