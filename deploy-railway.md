@@ -16,6 +16,8 @@
 2. Dodaj zmienną:
    - **Key**: `REACT_APP_API_URL`
    - **Value**: `https://language-learning-backend-production-3ce3.up.railway.app`
+   lub przez CLI:
+   railway variables set REACT_APP_API_URL=https://language-learning-backend-production-3ce3.up.railway.app
 
 ## Krok 4: Sprawdzenie
 1. Poczekaj na zakończenie budowania
