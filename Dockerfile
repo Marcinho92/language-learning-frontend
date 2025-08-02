@@ -2,14 +2,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Set Node memory limit and suppress deprecation warnings
-ENV NODE_OPTIONS="--max-old-space-size=4096 --no-deprecation"
+# Set Node memory limit
+ENV NODE_OPTIONS="--max-old-space-size=512"
+ENV NODE_ENV=production
 
 # Copy package files
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci --only=production
 
 # Copy source directory
 COPY src/ src/
