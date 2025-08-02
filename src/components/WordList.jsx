@@ -193,22 +193,23 @@ const WordList = () => {
       });
 
       try {
-        for (const word of words) {
-          const response = await fetch(`${apiUrl}/api/words`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(word),
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Failed to import word: ${word.originalWord}`);
-          }
-        }
+        // Use bulk import endpoint instead of individual requests
+        const response = await fetch(`${apiUrl}/api/words/bulk`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(words),
+        });
         
-        fetchWords(); // Refresh the list
-        alert('Import completed successfully!');
+        if (response.ok) {
+          const result = await response.json();
+          fetchWords(); // Refresh the list
+          alert(`Import completed successfully! ${result.importedCount} words imported.`);
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Failed to import words');
+        }
       } catch (error) {
         console.error('Import error:', error);
         alert('Import failed: ' + error.message);
