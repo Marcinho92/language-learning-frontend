@@ -21,7 +21,7 @@
    - **Value**: `3000`
    
    - **Key**: `NODE_OPTIONS`
-   - **Value**: `--max-old-space-size=512`
+   - **Value**: `--max-old-space-size=1024`
 
 ## Krok 4: Sprawdzenie
 1. Poczekaj na zakończenie budowania
@@ -35,4 +35,4 @@ Frontend będzie dostępny pod adresem: `https://your-project-name.railway.app`
 - **Błąd budowania**: Sprawdź logi w "Deployments"
 - **Błąd API**: Sprawdź czy backend działa
 - **CORS**: Sprawdź czy backend ma włączone CORS dla domeny Railway
-- **Pamięć**: Zwiększ `NODE_OPTIONS` do `--max-old-space-size=1024` jeśli potrzebne 
+- **Pamięć**: Zwiększ `NODE_OPTIONS` do `--max-old-space-size=2048` jeśli potrzebne 
