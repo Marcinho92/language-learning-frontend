@@ -26,5 +26,8 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 1000
+  },
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
   }
 }) 
