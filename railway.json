@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm run build && npx serve -s build -l $PORT",
+    "startCommand": "npx http-server -p $PORT -a 0.0.0.0",
     "healthcheckPath": "/",
     "healthcheckTimeout": 600,
     "restartPolicyType": "ON_FAILURE",
