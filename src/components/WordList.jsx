@@ -98,16 +98,7 @@ const WordList = () => {
     return matchesLanguage && matchesSearch;
   });
 
-  const getDifficultyLabel = (level) => {
-    const labels = {
-      1: 'Beginner',
-      2: 'Elementary', 
-      3: 'Intermediate',
-      4: 'Advanced',
-      5: 'Expert'
-    };
-    return labels[level] || 'Unknown';
-  };
+
 
   const getLanguageLabel = (language) => {
     const labels = {
@@ -209,11 +200,10 @@ const WordList = () => {
               <TableRow>
                 <TableCell>Original Word</TableCell>
                 <TableCell>Translation</TableCell>
-                <TableCell>Language</TableCell>
-                <TableCell>Difficulty</TableCell>
-                <TableCell>Proficiency</TableCell>
-                <TableCell>Example Usage</TableCell>
-                <TableCell align="center">Actions</TableCell>
+                                 <TableCell>Language</TableCell>
+                 <TableCell>Proficiency</TableCell>
+                 <TableCell>Example Usage</TableCell>
+                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -229,32 +219,22 @@ const WordList = () => {
                       {word.translation}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={getLanguageLabel(word.language)} 
-                      size="small" 
-                      color="primary" 
-                      variant="outlined"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={getDifficultyLabel(word.difficultyLevel)} 
-                      size="small"
-                      color={
-                        word.difficultyLevel <= 2 ? 'success' : 
-                        word.difficultyLevel <= 3 ? 'warning' : 'error'
-                      }
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Rating 
-                      value={word.proficiencyLevel} 
-                      max={5} 
-                      readOnly 
-                      size="small"
-                    />
-                  </TableCell>
+                                     <TableCell>
+                     <Chip 
+                       label={getLanguageLabel(word.language)} 
+                       size="small" 
+                       color="primary" 
+                       variant="outlined"
+                     />
+                   </TableCell>
+                   <TableCell>
+                     <Rating 
+                       value={word.proficiencyLevel} 
+                       max={5} 
+                       readOnly 
+                       size="small"
+                     />
+                   </TableCell>
                   <TableCell>
                     {word.exampleUsage ? (
                       <Typography variant="body2" sx={{ fontStyle: 'italic' }}>

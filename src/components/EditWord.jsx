@@ -24,7 +24,6 @@ const EditWord = () => {
     translation: '',
     language: '',
     exampleUsage: '',
-    difficultyLevel: 1,
     proficiencyLevel: 1
   });
   const [error, setError] = useState('');
@@ -43,14 +42,13 @@ const EditWord = () => {
       if (response.ok) {
         const data = await response.json();
         setWord(data);
-        setFormData({
-          originalWord: data.originalWord || '',
-          translation: data.translation || '',
-          language: data.language || '',
-          exampleUsage: data.exampleUsage || '',
-          difficultyLevel: data.difficultyLevel || 1,
-          proficiencyLevel: data.proficiencyLevel || 1
-        });
+                 setFormData({
+           originalWord: data.originalWord || '',
+           translation: data.translation || '',
+           language: data.language || '',
+           exampleUsage: data.exampleUsage || '',
+           proficiencyLevel: data.proficiencyLevel || 1
+         });
       } else {
         setError('Word not found');
       }
@@ -213,21 +211,7 @@ const EditWord = () => {
             rows={3}
           />
 
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Difficulty Level</InputLabel>
-            <Select
-              name="difficultyLevel"
-              value={formData.difficultyLevel}
-              onChange={handleChange}
-              label="Difficulty Level"
-            >
-              <MenuItem value={1}>Beginner</MenuItem>
-              <MenuItem value={2}>Elementary</MenuItem>
-              <MenuItem value={3}>Intermediate</MenuItem>
-              <MenuItem value={4}>Advanced</MenuItem>
-              <MenuItem value={5}>Expert</MenuItem>
-            </Select>
-          </FormControl>
+          
 
           <Box sx={{ mt: 2 }}>
             <Typography component="legend">Proficiency Level</Typography>

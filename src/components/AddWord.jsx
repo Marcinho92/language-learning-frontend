@@ -19,8 +19,7 @@ const AddWord = () => {
     originalWord: '',
     translation: '',
     language: '',
-    exampleUsage: '',
-    difficultyLevel: 1
+    exampleUsage: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -52,13 +51,12 @@ const AddWord = () => {
 
       if (response.ok) {
         setSuccess('Word added successfully!');
-        setFormData({
-          originalWord: '',
-          translation: '',
-          language: '',
-          exampleUsage: '',
-          difficultyLevel: 1
-        });
+                 setFormData({
+           originalWord: '',
+           translation: '',
+           language: '',
+           exampleUsage: ''
+         });
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to add word');
@@ -124,32 +122,16 @@ const AddWord = () => {
             </Select>
           </FormControl>
 
-          <TextField
-            fullWidth
-            label="Example Usage (optional)"
-            name="exampleUsage"
-            value={formData.exampleUsage}
-            onChange={handleChange}
-            margin="normal"
-            multiline
-            rows={3}
-          />
-
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Difficulty Level</InputLabel>
-            <Select
-              name="difficultyLevel"
-              value={formData.difficultyLevel}
-              onChange={handleChange}
-              label="Difficulty Level"
-            >
-              <MenuItem value={1}>Beginner</MenuItem>
-              <MenuItem value={2}>Elementary</MenuItem>
-              <MenuItem value={3}>Intermediate</MenuItem>
-              <MenuItem value={4}>Advanced</MenuItem>
-              <MenuItem value={5}>Expert</MenuItem>
-            </Select>
-          </FormControl>
+                     <TextField
+             fullWidth
+             label="Example Usage (optional)"
+             name="exampleUsage"
+             value={formData.exampleUsage}
+             onChange={handleChange}
+             margin="normal"
+             multiline
+             rows={3}
+           />
 
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Button
