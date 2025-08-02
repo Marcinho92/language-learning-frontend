@@ -21,6 +21,6 @@
     "dev": "vite",
     "build": "vite build --mode production",
     "preview": "vite preview",
-    "start": "npx serve -s dist -l $PORT"
+    "start": "npx serve -s dist -l $PORT -a 0.0.0.0"
   }
 } 
