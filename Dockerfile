@@ -21,6 +21,9 @@ COPY index.html ./
 # Copy vite config
 COPY vite.config.js ./
 
+# Copy server file
+COPY server.js ./
+
 EXPOSE 3000
 
 CMD ["sh", "-c", "npm run build && npx serve -s dist -l 3000"] 
