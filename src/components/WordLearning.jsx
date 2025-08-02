@@ -1,107 +1,98 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
   TextField,
   Button,
-  Box,
   Paper,
+  Box,
   Rating,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Alert,
+  Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 const WordLearning = () => {
-  const navigate = useNavigate();
   const [currentWord, setCurrentWord] = useState(null);
   const [translation, setTranslation] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [filters, setFilters] = useState({
-    language: '',
+    language: ''
   });
+  const navigate = useNavigate();
 
-  const fetchRandomWord = useCallback(async () => {
+  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
+
+  const fetchRandomWord = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
-      const params = new URLSearchParams();
-      if (filters.language) params.append('language', filters.language);
-
-      const response = await fetch(`${apiUrl}/api/words/random?${params}`);
-
+      setError('');
+      const queryParams = new URLSearchParams();
+      if (filters.language) {
+        queryParams.append('language', filters.language);
+      }
+      
+      const response = await fetch(`${apiUrl}/api/words/random?${queryParams}`);
+      
       if (response.ok) {
         const data = await response.json();
-        
-        // Sprawdź czy backend zwrócił informację o pustej bazie
         if (data.isEmpty) {
           setCurrentWord(null);
           setError(data.message || 'Baza słów jest pusta. Dodaj słowa, aby rozpocząć naukę.');
           setTranslation('');
           setResult(null);
         } else {
-          // Normalne słowo
           setCurrentWord(data);
           setTranslation('');
           setResult(null);
           setError('');
         }
       } else {
-        const errorData = await response.text();
-        setError(errorData || 'Failed to fetch word');
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to fetch random word');
         setCurrentWord(null);
       }
     } catch (error) {
       console.error('Error fetching random word:', error);
-      setError('Error fetching word. Please try again.');
+      setError('Failed to fetch random word');
       setCurrentWord(null);
     }
-  }, [filters]);
-
-  useEffect(() => {
-    fetchRandomWord();
-  }, [fetchRandomWord]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!currentWord) return;
 
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
-      const response = await fetch(
-        `${apiUrl}/api/words/${currentWord.id}/check?translation=${encodeURIComponent(translation)}`,
-        {
-          method: 'POST'
-        }
-      );
+      const response = await fetch(`${apiUrl}/api/words/${currentWord.id}/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ translation }),
+      });
 
-      if (response.ok) {
-        const resultData = await response.json();
-        setResult({
-          correct: resultData.correct,
-          message: resultData.message,
-          exampleUsage: resultData.exampleUsage,
-          explanation: resultData.explanation,
-        });
-      } else {
-        setError('Failed to check translation. Please try again.');
-      }
+      const data = await response.json();
+      setResult(data);
     } catch (error) {
       console.error('Error checking translation:', error);
-      setError('Error checking translation. Please try again.');
+      setResult({ correct: false, message: 'Error checking translation' });
     }
   };
 
   const handleFilterChange = (e) => {
-    const { name, value } = e.target;
     setFilters(prev => ({
       ...prev,
-      [name]: value
+      [e.target.name]: e.target.value
     }));
   };
+
+  useEffect(() => {
+    fetchRandomWord();
+  }, [filters]);
 
   return (
     <Container maxWidth="sm">
@@ -125,8 +116,6 @@ const WordLearning = () => {
             <MenuItem value="german">German</MenuItem>
           </Select>
         </FormControl>
-
-
       </Box>
 
       {error && (
@@ -203,31 +192,37 @@ const WordLearning = () => {
                 </Box>
               )}
               
-              {result.explanation && (
+              {result.correct && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Explanation:
+                    Correct Translation:
                   </Typography>
                   <Typography variant="body1">
-                    {result.explanation}
+                    {result.correctTranslation}
                   </Typography>
                 </Box>
               )}
-              
-              <Button
-                variant="outlined"
-                color="primary"
-                fullWidth
-                sx={{ mt: 2 }}
-                onClick={fetchRandomWord}
-              >
-                Next Word
-              </Button>
             </Box>
           )}
         </Paper>
       ) : !error && (
-        <Typography align="center">No words available for the selected criteria.</Typography>
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="body1" align="center">
+            Loading...
+          </Typography>
+        </Paper>
+      )}
+
+      {currentWord && (
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Button
+            variant="outlined"
+            onClick={fetchRandomWord}
+            sx={{ mr: 1 }}
+          >
+            Next Word
+          </Button>
+        </Box>
       )}
     </Container>
   );

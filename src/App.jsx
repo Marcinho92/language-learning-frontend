@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Container, CssBaseline } from '@mui/material';
-import WordList from './components/WordList';
-import WordLearning from './components/WordLearning';
-import AddWord from './components/AddWord';
-import Navigation from './components/Navigation';
+import WordList from './components/WordList.jsx';
+import WordLearning from './components/WordLearning.jsx';
+import AddWord from './components/AddWord.jsx';
+import Navigation from './components/Navigation.jsx';
 
 function App() {
   return (
