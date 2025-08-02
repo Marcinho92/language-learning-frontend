@@ -22,7 +22,7 @@ import {
   Alert,
   Chip
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon, GetApp as DownloadIcon, Publish as UploadIcon } from '@mui/icons-material';
 
 const WordList = () => {
   const [words, setWords] = useState([]);
@@ -31,6 +31,10 @@ const WordList = () => {
   const [filters, setFilters] = useState({
     language: '',
     search: ''
+  });
+  const [sortConfig, setSortConfig] = useState({
+    key: null,
+    direction: 'asc'
   });
 
   const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
@@ -89,6 +93,37 @@ const WordList = () => {
     }));
   };
 
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedWords = [...filteredWords].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    
+    let aValue = a[sortConfig.key];
+    let bValue = b[sortConfig.key];
+    
+    if (sortConfig.key === 'proficiencyLevel') {
+      aValue = parseInt(aValue) || 0;
+      bValue = parseInt(bValue) || 0;
+    } else {
+      aValue = (aValue || '').toString().toLowerCase();
+      bValue = (bValue || '').toString().toLowerCase();
+    }
+    
+    if (aValue < bValue) {
+      return sortConfig.direction === 'asc' ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortConfig.direction === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
+
   const filteredWords = words.filter(word => {
     const matchesLanguage = !filters.language || word.language === filters.language;
     const matchesSearch = !filters.search || 
@@ -110,6 +145,76 @@ const WordList = () => {
     return labels[language] || language;
   };
 
+  const exportToCSV = () => {
+    const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage'];
+    const csvContent = [
+      headers.join(','),
+      ...sortedWords.map(word => [
+        `"${word.originalWord}"`,
+        `"${word.translation}"`,
+        `"${getLanguageLabel(word.language)}"`,
+        word.proficiencyLevel,
+        `"${word.exampleUsage || ''}"`
+      ].join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'words.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
+  const importFromCSV = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target.result;
+      const lines = text.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      const words = lines.slice(1).filter(line => line.trim()).map(line => {
+        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+        return {
+          originalWord: values[0] || '',
+          translation: values[1] || '',
+          language: values[2]?.toLowerCase() || 'english',
+          proficiencyLevel: parseInt(values[3]) || 1,
+          exampleUsage: values[4] || ''
+        };
+      });
+
+      try {
+        for (const word of words) {
+          const response = await fetch(`${apiUrl}/api/words`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(word),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to import word: ${word.originalWord}`);
+          }
+        }
+        
+        fetchWords(); // Refresh the list
+        alert('Import completed successfully!');
+      } catch (error) {
+        console.error('Import error:', error);
+        alert('Import failed: ' + error.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg">
@@ -126,14 +231,37 @@ const WordList = () => {
         <Typography variant="h4">
           Word List
         </Typography>
-        <Button
-          component={Link}
-          to="/add"
-          variant="contained"
-          color="primary"
-        >
-          Add New Word
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={exportToCSV}
+            disabled={sortedWords.length === 0}
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="outlined"
+            component="label"
+            startIcon={<UploadIcon />}
+          >
+            Import CSV
+            <input
+              type="file"
+              accept=".csv"
+              onChange={importFromCSV}
+              style={{ display: 'none' }}
+            />
+          </Button>
+          <Button
+            component={Link}
+            to="/add"
+            variant="contained"
+            color="primary"
+          >
+            Add New Word
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -170,11 +298,11 @@ const WordList = () => {
         </Box>
 
         <Typography variant="body2" color="text.secondary">
-          Showing {filteredWords.length} of {words.length} words
+          Showing {sortedWords.length} of {words.length} words
         </Typography>
       </Paper>
 
-      {filteredWords.length === 0 ? (
+      {sortedWords.length === 0 ? (
         <Paper sx={{ p: 3, textAlign: 'center' }}>
           <Typography variant="h6" color="text.secondary" gutterBottom>
             No words found
@@ -198,16 +326,36 @@ const WordList = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>Original Word</TableCell>
-                <TableCell>Translation</TableCell>
-                                 <TableCell>Language</TableCell>
-                 <TableCell>Proficiency</TableCell>
-                 <TableCell>Example Usage</TableCell>
-                 <TableCell align="center">Actions</TableCell>
+                <TableCell 
+                  onClick={() => handleSort('originalWord')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Original Word {sortConfig.key === 'originalWord' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSort('translation')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Translation {sortConfig.key === 'translation' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSort('language')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Language {sortConfig.key === 'language' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSort('proficiencyLevel')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Proficiency {sortConfig.key === 'proficiencyLevel' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell>Example Usage</TableCell>
+                <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredWords.map((word) => (
+              {sortedWords.map((word) => (
                 <TableRow key={word.id}>
                   <TableCell>
                     <Typography variant="body1" fontWeight="bold">
@@ -219,22 +367,22 @@ const WordList = () => {
                       {word.translation}
                     </Typography>
                   </TableCell>
-                                     <TableCell>
-                     <Chip 
-                       label={getLanguageLabel(word.language)} 
-                       size="small" 
-                       color="primary" 
-                       variant="outlined"
-                     />
-                   </TableCell>
-                   <TableCell>
-                     <Rating 
-                       value={word.proficiencyLevel} 
-                       max={5} 
-                       readOnly 
-                       size="small"
-                     />
-                   </TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={getLanguageLabel(word.language)} 
+                      size="small" 
+                      color="primary" 
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Rating 
+                      value={word.proficiencyLevel} 
+                      max={5} 
+                      readOnly 
+                      size="small"
+                    />
+                  </TableCell>
                   <TableCell>
                     {word.exampleUsage ? (
                       <Typography variant="body2" sx={{ fontStyle: 'italic' }}>

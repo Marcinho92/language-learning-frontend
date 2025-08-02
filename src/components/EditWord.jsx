@@ -211,8 +211,6 @@ const EditWord = () => {
             rows={3}
           />
 
-          
-
           <Box sx={{ mt: 2 }}>
             <Typography component="legend">Proficiency Level</Typography>
             <Rating

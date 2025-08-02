@@ -28,7 +28,7 @@ const Navigation = () => {
             color="inherit"
             variant={isActive('/words') || isActive('/') ? 'contained' : 'text'}
           >
-            Word List
+            Words
           </Button>
           <Button
             component={Link}
@@ -36,7 +36,7 @@ const Navigation = () => {
             color="inherit"
             variant={isActive('/learn') ? 'contained' : 'text'}
           >
-            Learn Words
+            Learn
           </Button>
           <Button
             component={Link}

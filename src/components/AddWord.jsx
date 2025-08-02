@@ -122,16 +122,16 @@ const AddWord = () => {
             </Select>
           </FormControl>
 
-                     <TextField
-             fullWidth
-             label="Example Usage (optional)"
-             name="exampleUsage"
-             value={formData.exampleUsage}
-             onChange={handleChange}
-             margin="normal"
-             multiline
-             rows={3}
-           />
+          <TextField
+            fullWidth
+            label="Example Usage (optional)"
+            name="exampleUsage"
+            value={formData.exampleUsage}
+            onChange={handleChange}
+            margin="normal"
+            multiline
+            rows={3}
+          />
 
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Button
