@@ -10,7 +10,7 @@ ENV NODE_ENV=production
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source directory
 COPY src/ src/
@@ -23,4 +23,4 @@ COPY vite.config.js ./
 
 EXPOSE 3000
 
-CMD ["npm", "run", "build", "&&", "npx", "serve", "-s", "dist", "-l", "3000"] 
+CMD ["sh", "-c", "npm run build && npx serve -s dist -l 3000"] 
