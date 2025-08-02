@@ -12,15 +12,17 @@
     "@mui/material": "^5.13.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.11.1",
-    "react-scripts": "^5.0.1",
-    "http-server": "^14.1.1"
+    "react-router-dom": "^6.11.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^4.3.0"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "GENERATE_SOURCEMAP=false CI=false react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite preview --port $PORT --host 0.0.0.0"
   },
   "eslintConfig": {
     "extends": [
