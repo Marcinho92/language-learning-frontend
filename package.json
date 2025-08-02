@@ -13,7 +13,6 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.11.1",
-    "http-server": "^14.1.1",
     "@vitejs/plugin-react": "^4.0.0",
     "vite": "^4.3.0"
   },
@@ -21,6 +20,6 @@
     "dev": "vite",
     "build": "vite build --mode production",
     "preview": "vite preview",
-    "start": "npx http-server dist -p $PORT -a 0.0.0.0"
+    "start": "vite preview --port $PORT --host 0.0.0.0"
   }
 } 
