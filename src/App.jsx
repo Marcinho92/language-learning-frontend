@@ -1,25 +1,63 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Container, CssBaseline } from '@mui/material';
+import { Container, CssBaseline, Alert, Box, Typography } from '@mui/material';
 import WordList from './components/WordList.jsx';
 import WordLearning from './components/WordLearning.jsx';
 import AddWord from './components/AddWord.jsx';
+import EditWord from './components/EditWord.jsx';
 import Navigation from './components/Navigation.jsx';
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <Container>
+          <Box sx={{ mt: 4, textAlign: 'center' }}>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              Something went wrong. Please refresh the page.
+            </Alert>
+            <Typography variant="body2" color="text.secondary">
+              Error: {this.state.error?.message}
+            </Typography>
+          </Box>
+        </Container>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function App() {
   return (
-    <Router>
-      <CssBaseline />
-      <Container>
-        <Navigation />
-        <Routes>
-          <Route path="/words" element={<WordList />} />
-          <Route path="/learn" element={<WordLearning />} />
-          <Route path="/add" element={<AddWord />} />
-          <Route path="/" element={<WordList />} />
-        </Routes>
-      </Container>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <CssBaseline />
+        <Container>
+          <Navigation />
+          <Routes>
+            <Route path="/words" element={<WordList />} />
+            <Route path="/learn" element={<WordLearning />} />
+            <Route path="/add" element={<AddWord />} />
+            <Route path="/edit/:id" element={<EditWord />} />
+            <Route path="/" element={<WordList />} />
+          </Routes>
+        </Container>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

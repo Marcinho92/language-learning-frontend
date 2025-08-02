@@ -93,6 +93,15 @@ const WordList = () => {
     }));
   };
 
+  const filteredWords = words.filter(word => {
+    const matchesLanguage = !filters.language || word.language === filters.language;
+    const matchesSearch = !filters.search || 
+      word.originalWord.toLowerCase().includes(filters.search.toLowerCase()) ||
+      word.translation.toLowerCase().includes(filters.search.toLowerCase());
+    
+    return matchesLanguage && matchesSearch;
+  });
+
   const handleSort = (key) => {
     let direction = 'asc';
     if (sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -122,15 +131,6 @@ const WordList = () => {
       return sortConfig.direction === 'asc' ? 1 : -1;
     }
     return 0;
-  });
-
-  const filteredWords = words.filter(word => {
-    const matchesLanguage = !filters.language || word.language === filters.language;
-    const matchesSearch = !filters.search || 
-      word.originalWord.toLowerCase().includes(filters.search.toLowerCase()) ||
-      word.translation.toLowerCase().includes(filters.search.toLowerCase());
-    
-    return matchesLanguage && matchesSearch;
   });
 
 

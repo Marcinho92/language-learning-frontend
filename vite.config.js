@@ -16,14 +16,7 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
     rollupOptions: {
-      input: 'index.html',
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          mui: ['@mui/material', '@mui/icons-material'],
-          router: ['react-router-dom']
-        }
-      }
+      input: 'index.html'
     },
     chunkSizeWarningLimit: 1000
   },
