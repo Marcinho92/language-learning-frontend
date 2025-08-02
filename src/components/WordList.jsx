@@ -146,7 +146,7 @@ const WordList = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage'];
+    const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage', 'Explanation'];
     const csvContent = [
       headers.join(','),
       ...sortedWords.map(word => [
@@ -154,7 +154,8 @@ const WordList = () => {
         `"${word.translation}"`,
         `"${getLanguageLabel(word.language)}"`,
         word.proficiencyLevel,
-        `"${word.exampleUsage || ''}"`
+        `"${word.exampleUsage || ''}"`,
+        `"${word.explanation || ''}"`
       ].join(','))
     ].join('\n');
     
@@ -186,7 +187,8 @@ const WordList = () => {
           translation: values[1] || '',
           language: values[2]?.toLowerCase() || 'english',
           proficiencyLevel: parseInt(values[3]) || 1,
-          exampleUsage: values[4] || ''
+          exampleUsage: values[4] || '',
+          explanation: values[5] || ''
         };
       });
 
@@ -351,6 +353,7 @@ const WordList = () => {
                   Proficiency {sortConfig.key === 'proficiencyLevel' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </TableCell>
                 <TableCell>Example Usage</TableCell>
+                <TableCell>Explanation</TableCell>
                 <TableCell align="center">Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -383,17 +386,28 @@ const WordList = () => {
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>
-                    {word.exampleUsage ? (
-                      <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-                        {word.exampleUsage}
-                      </Typography>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">
-                        No example
-                      </Typography>
-                    )}
-                  </TableCell>
+                                     <TableCell>
+                     {word.exampleUsage ? (
+                       <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                         {word.exampleUsage}
+                       </Typography>
+                     ) : (
+                       <Typography variant="body2" color="text.secondary">
+                         No example
+                       </Typography>
+                     )}
+                   </TableCell>
+                   <TableCell>
+                     {word.explanation ? (
+                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                         {word.explanation}
+                       </Typography>
+                     ) : (
+                       <Typography variant="body2" color="text.secondary">
+                         No explanation
+                       </Typography>
+                     )}
+                   </TableCell>
                   <TableCell align="center">
                     <IconButton
                       component={Link}

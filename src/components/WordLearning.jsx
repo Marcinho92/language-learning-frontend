@@ -192,6 +192,17 @@ const WordLearning = () => {
                 </Box>
               )}
               
+              {result.explanation && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Explanation:
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
+                    {result.explanation}
+                  </Typography>
+                </Box>
+              )}
+              
               {result.correct && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle1" fontWeight="bold" gutterBottom>

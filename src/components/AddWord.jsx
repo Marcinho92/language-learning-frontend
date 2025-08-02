@@ -19,7 +19,8 @@ const AddWord = () => {
     originalWord: '',
     translation: '',
     language: '',
-    exampleUsage: ''
+    exampleUsage: '',
+    explanation: ''
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -55,7 +56,8 @@ const AddWord = () => {
            originalWord: '',
            translation: '',
            language: '',
-           exampleUsage: ''
+           exampleUsage: '',
+           explanation: ''
          });
       } else {
         const errorData = await response.json();
@@ -131,6 +133,18 @@ const AddWord = () => {
             margin="normal"
             multiline
             rows={3}
+          />
+
+          <TextField
+            fullWidth
+            label="Explanation (optional)"
+            name="explanation"
+            value={formData.explanation}
+            onChange={handleChange}
+            margin="normal"
+            multiline
+            rows={3}
+            placeholder="Add a brief explanation or context for this word..."
           />
 
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>

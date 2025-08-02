@@ -24,6 +24,7 @@ const EditWord = () => {
     translation: '',
     language: '',
     exampleUsage: '',
+    explanation: '',
     proficiencyLevel: 1
   });
   const [error, setError] = useState('');
@@ -42,13 +43,14 @@ const EditWord = () => {
       if (response.ok) {
         const data = await response.json();
         setWord(data);
-                 setFormData({
-           originalWord: data.originalWord || '',
-           translation: data.translation || '',
-           language: data.language || '',
-           exampleUsage: data.exampleUsage || '',
-           proficiencyLevel: data.proficiencyLevel || 1
-         });
+                                   setFormData({
+            originalWord: data.originalWord || '',
+            translation: data.translation || '',
+            language: data.language || '',
+            exampleUsage: data.exampleUsage || '',
+            explanation: data.explanation || '',
+            proficiencyLevel: data.proficiencyLevel || 1
+          });
       } else {
         setError('Word not found');
       }
@@ -209,6 +211,18 @@ const EditWord = () => {
             margin="normal"
             multiline
             rows={3}
+          />
+
+          <TextField
+            fullWidth
+            label="Explanation (optional)"
+            name="explanation"
+            value={formData.explanation}
+            onChange={handleChange}
+            margin="normal"
+            multiline
+            rows={3}
+            placeholder="Add a brief explanation or context for this word..."
           />
 
           <Box sx={{ mt: 2 }}>
