@@ -14,11 +14,11 @@ RUN npm install
 # Copy source directory
 COPY src/ src/
 
-# Copy public directory
-COPY public/ public/
+# Copy index.html
+COPY index.html ./
 
-# Copy other necessary files
-COPY .env* ./
+# Copy vite config
+COPY vite.config.js ./
 
 EXPOSE 3000
 
