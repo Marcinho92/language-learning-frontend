@@ -214,6 +214,37 @@ const WordList = () => {
     return labels[language] || language;
   };
 
+  const parseCsvLine = (line) => {
+    const fields = [];
+    let currentField = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+
+      if (c === '"') {
+        if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+          // Double quotes inside quoted field (escaped quote)
+          currentField += '"';
+          i++;
+        } else {
+          // Start/end of quoted field
+          inQuotes = !inQuotes;
+        }
+      } else if (c === ',' && !inQuotes) {
+        // End of field (only if not inside quotes)
+        fields.push(currentField.trim());
+        currentField = '';
+      } else {
+        currentField += c;
+      }
+    }
+
+    // Add the last field
+    fields.push(currentField.trim());
+    return fields;
+  };
+
   const exportToCSV = () => {
     const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage', 'Explanation'];
     const csvContent = [
@@ -250,7 +281,7 @@ const WordList = () => {
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
       const words = lines.slice(1).filter(line => line.trim()).map(line => {
-        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+        const values = parseCsvLine(line);
         return {
           originalWord: values[0] || '',
           translation: values[1] || '',
