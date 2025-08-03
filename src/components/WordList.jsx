@@ -383,28 +383,18 @@ const WordList = () => {
           <Collapse in={isExpanded}>
             <Divider sx={{ my: 2 }} />
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Language
-                </Typography>
-                <Chip 
-                  label={getLanguageLabel(word.language)} 
-                  size="small" 
-                  color="primary" 
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Proficiency Level
-                </Typography>
-                <Rating 
-                  value={word.proficiencyLevel} 
-                  max={5} 
-                  readOnly 
-                  size="small"
-                />
-              </Grid>
+
+                              <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Proficiency Level
+                  </Typography>
+                  <Rating 
+                    value={word.proficiencyLevel} 
+                    max={5} 
+                    readOnly 
+                    size="small"
+                  />
+                </Grid>
               {word.exampleUsage && (
                 <Grid item xs={12}>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -614,12 +604,7 @@ const WordList = () => {
                 >
                   Translation {sortConfig.key === 'translation' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                 </TableCell>
-                <TableCell 
-                  onClick={() => handleSort('language')}
-                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                >
-                  Language {sortConfig.key === 'language' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                </TableCell>
+
                 <TableCell 
                   onClick={() => handleSort('proficiencyLevel')}
                   sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
@@ -650,14 +635,7 @@ const WordList = () => {
                       {word.translation}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={getLanguageLabel(word.language)} 
-                      size="small" 
-                      color="primary" 
-                      variant="outlined"
-                    />
-                  </TableCell>
+
                   <TableCell>
                     <Rating 
                       value={word.proficiencyLevel} 
