@@ -158,6 +158,18 @@ const GrammarPractice = () => {
         </Card>
       )}
 
+      {/* Grammar Explanation - always visible */}
+      {currentPractice && (
+        <Paper sx={{ p: 3, mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Grammar Explanation
+          </Typography>
+          <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-line' }}>
+            {currentPractice.explanation || "Loading grammar explanation..."}
+          </Typography>
+        </Paper>
+      )}
+
       <Paper sx={{ p: 3 }}>
         <form onSubmit={handleSubmit}>
           <TextField
@@ -203,13 +215,6 @@ const GrammarPractice = () => {
           >
             {result.feedback}
           </Alert>
-          
-          <Typography variant="h6" gutterBottom>
-            Grammar Explanation
-          </Typography>
-          <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-line' }}>
-            {result.explanation}
-          </Typography>
           
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <Button

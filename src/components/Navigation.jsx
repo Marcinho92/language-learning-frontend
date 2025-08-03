@@ -18,7 +18,14 @@ const Navigation = () => {
   return (
     <AppBar position="static" sx={{ mb: 3 }}>
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography 
+          variant="h6" 
+          component="div" 
+          sx={{ 
+            flexGrow: 1,
+            display: { xs: 'none', sm: 'block' } // Hide on mobile, show on tablet+
+          }}
+        >
           Language Learning
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
