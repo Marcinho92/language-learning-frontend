@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Container, CssBaseline, Alert, Box, Typography } from '@mui/material';
 import WordList from './components/WordList.jsx';
 import WordLearning from './components/WordLearning.jsx';
+import GrammarPractice from './components/GrammarPractice.jsx';
 import AddWord from './components/AddWord.jsx';
 import EditWord from './components/EditWord.jsx';
 import Navigation from './components/Navigation.jsx';
@@ -51,6 +52,7 @@ function App() {
           <Routes>
             <Route path="/words" element={<WordList />} />
             <Route path="/learn" element={<WordLearning />} />
+            <Route path="/grammar" element={<GrammarPractice />} />
             <Route path="/add" element={<AddWord />} />
             <Route path="/edit/:id" element={<EditWord />} />
             <Route path="/" element={<WordList />} />

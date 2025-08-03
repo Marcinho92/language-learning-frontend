@@ -40,6 +40,14 @@ const Navigation = () => {
           </Button>
           <Button
             component={Link}
+            to="/grammar"
+            color="inherit"
+            variant={isActive('/grammar') ? 'contained' : 'text'}
+          >
+            Grammar
+          </Button>
+          <Button
+            component={Link}
             to="/add"
             color="inherit"
             variant={isActive('/add') ? 'contained' : 'text'}

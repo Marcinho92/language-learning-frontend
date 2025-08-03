@@ -203,16 +203,7 @@ const WordLearning = () => {
                 </Box>
               )}
               
-              {result.correct && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Correct Translation:
-                  </Typography>
-                  <Typography variant="body1">
-                    {result.correctTranslation}
-                  </Typography>
-                </Box>
-              )}
+
             </Box>
           )}
         </Paper>
