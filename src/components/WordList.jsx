@@ -23,9 +23,23 @@ import {
   Chip,
   Checkbox,
   TablePagination,
-  Tooltip
+  Tooltip,
+  useTheme,
+  useMediaQuery,
+  Card,
+  CardContent,
+  Collapse,
+  Grid,
+  Divider
 } from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon, GetApp as DownloadIcon, Publish as UploadIcon } from '@mui/icons-material';
+import { 
+  Edit as EditIcon, 
+  Delete as DeleteIcon, 
+  GetApp as DownloadIcon, 
+  Publish as UploadIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
+} from '@mui/icons-material';
 
 const WordList = () => {
   const [words, setWords] = useState([]);
@@ -42,6 +56,10 @@ const WordList = () => {
   const [selectedWords, setSelectedWords] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [expandedWords, setExpandedWords] = useState(new Set());
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
 
@@ -82,6 +100,11 @@ const WordList = () => {
       if (response.ok) {
         setWords(words.filter(word => word.id !== id));
         setSelectedWords(selectedWords.filter(wordId => wordId !== id));
+        setExpandedWords(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to delete word');
@@ -112,6 +135,7 @@ const WordList = () => {
         const result = await response.json();
         setWords(words.filter(word => !selectedWords.includes(word.id)));
         setSelectedWords([]);
+        setExpandedWords(new Set());
         alert(`Successfully deleted ${result.deletedCount} words!`);
       } else {
         const errorData = await response.json();
@@ -155,6 +179,18 @@ const WordList = () => {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleToggleExpand = (wordId) => {
+    setExpandedWords(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(wordId)) {
+        newSet.delete(wordId);
+      } else {
+        newSet.add(wordId);
+      }
+      return newSet;
+    });
   };
 
   const filteredWords = words.filter(word => {
@@ -201,8 +237,6 @@ const WordList = () => {
   const paginatedWords = rowsPerPage === -1 
     ? sortedWords 
     : sortedWords.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-
-
 
   const getLanguageLabel = (language) => {
     const labels = {
@@ -318,6 +352,109 @@ const WordList = () => {
     reader.readAsText(file);
   };
 
+  const renderMobileWordCard = (word) => {
+    const isExpanded = expandedWords.has(word.id);
+    
+    return (
+      <Card key={word.id} sx={{ mb: 2, cursor: 'pointer' }} onClick={() => handleToggleExpand(word.id)}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h6" fontWeight="bold" gutterBottom>
+                {word.originalWord}
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {word.translation}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Checkbox
+                checked={selectedWords.includes(word.id)}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  handleSelectWord(word.id);
+                }}
+                size="small"
+              />
+              {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            </Box>
+          </Box>
+          
+          <Collapse in={isExpanded}>
+            <Divider sx={{ my: 2 }} />
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Language
+                </Typography>
+                <Chip 
+                  label={getLanguageLabel(word.language)} 
+                  size="small" 
+                  color="primary" 
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Proficiency Level
+                </Typography>
+                <Rating 
+                  value={word.proficiencyLevel} 
+                  max={5} 
+                  readOnly 
+                  size="small"
+                />
+              </Grid>
+              {word.exampleUsage && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Example Usage
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                    {word.exampleUsage}
+                  </Typography>
+                </Grid>
+              )}
+              {word.explanation && (
+                <Grid item xs={12}>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
+                    Explanation
+                  </Typography>
+                  <Typography variant="body2">
+                    {word.explanation}
+                  </Typography>
+                </Grid>
+              )}
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                  <IconButton
+                    component={Link}
+                    to={`/edit/${word.id}`}
+                    color="primary"
+                    size="small"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(word.id);
+                    }}
+                    color="error"
+                    size="small"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              </Grid>
+            </Grid>
+          </Collapse>
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (loading) {
     return (
       <Container maxWidth="lg">
@@ -330,52 +467,52 @@ const WordList = () => {
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4">
           Word List
         </Typography>
-                 <Box sx={{ display: 'flex', gap: 1 }}>
-           <Button
-             variant="outlined"
-             startIcon={<DownloadIcon />}
-             onClick={exportToCSV}
-             disabled={sortedWords.length === 0}
-           >
-             Export CSV
-           </Button>
-           <Button
-             variant="outlined"
-             component="label"
-             startIcon={<UploadIcon />}
-           >
-             Import CSV
-             <input
-               type="file"
-               accept=".csv"
-               onChange={importFromCSV}
-               style={{ display: 'none' }}
-             />
-           </Button>
-           {selectedWords.length > 0 && (
-             <Tooltip title={`Delete ${selectedWords.length} selected words`}>
-               <Button
-                 variant="contained"
-                 color="error"
-                 onClick={handleBulkDelete}
-               >
-                 Delete Selected ({selectedWords.length})
-               </Button>
-             </Tooltip>
-           )}
-           <Button
-             component={Link}
-             to="/add"
-             variant="contained"
-             color="primary"
-           >
-             Add New Word
-           </Button>
-         </Box>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            startIcon={<DownloadIcon />}
+            onClick={exportToCSV}
+            disabled={sortedWords.length === 0}
+          >
+            Export CSV
+          </Button>
+          <Button
+            variant="outlined"
+            component="label"
+            startIcon={<UploadIcon />}
+          >
+            Import CSV
+            <input
+              type="file"
+              accept=".csv"
+              onChange={importFromCSV}
+              style={{ display: 'none' }}
+            />
+          </Button>
+          {selectedWords.length > 0 && (
+            <Tooltip title={`Delete ${selectedWords.length} selected words`}>
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleBulkDelete}
+              >
+                Delete Selected ({selectedWords.length})
+              </Button>
+            </Tooltip>
+          )}
+          <Button
+            component={Link}
+            to="/add"
+            variant="contained"
+            color="primary"
+          >
+            Add New Word
+          </Button>
+        </Box>
       </Box>
 
       {error && (
@@ -385,7 +522,7 @@ const WordList = () => {
       )}
 
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
           <TextField
             label="Search words"
             name="search"
@@ -411,10 +548,10 @@ const WordList = () => {
           </FormControl>
         </Box>
 
-                 <Typography variant="body2" color="text.secondary">
-           Showing {sortedWords.length} of {words.length} words
-           {selectedWords.length > 0 && ` • ${selectedWords.length} selected`}
-         </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Showing {sortedWords.length} of {words.length} words
+          {selectedWords.length > 0 && ` • ${selectedWords.length} selected`}
+        </Typography>
       </Paper>
 
       {sortedWords.length === 0 ? (
@@ -436,61 +573,78 @@ const WordList = () => {
             </Button>
           )}
         </Paper>
-             ) : (
-         <TableContainer component={Paper}>
-           <Table>
-             <TableHead>
-               <TableRow>
-                 <TableCell padding="checkbox">
-                   <Checkbox
-                     indeterminate={selectedWords.length > 0 && selectedWords.length < paginatedWords.length}
-                     checked={paginatedWords.length > 0 && selectedWords.length === paginatedWords.length}
-                     onChange={handleSelectAll}
-                   />
-                 </TableCell>
-                 <TableCell 
-                   onClick={() => handleSort('originalWord')}
-                   sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                 >
-                   Original Word {sortConfig.key === 'originalWord' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                 </TableCell>
-                 <TableCell 
-                   onClick={() => handleSort('translation')}
-                   sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                 >
-                   Translation {sortConfig.key === 'translation' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                 </TableCell>
-                 <TableCell 
-                   onClick={() => handleSort('language')}
-                   sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                 >
-                   Language {sortConfig.key === 'language' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                 </TableCell>
-                 <TableCell 
-                   onClick={() => handleSort('proficiencyLevel')}
-                   sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
-                 >
-                   Proficiency {sortConfig.key === 'proficiencyLevel' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                 </TableCell>
-                 <TableCell>Example Usage</TableCell>
-                 <TableCell>Explanation</TableCell>
-                 <TableCell align="center">Actions</TableCell>
-               </TableRow>
-             </TableHead>
-                         <TableBody>
-               {paginatedWords.map((word) => (
-                 <TableRow key={word.id}>
-                   <TableCell padding="checkbox">
-                     <Checkbox
-                       checked={selectedWords.includes(word.id)}
-                       onChange={() => handleSelectWord(word.id)}
-                     />
-                   </TableCell>
-                   <TableCell>
-                     <Typography variant="body1" fontWeight="bold">
-                       {word.originalWord}
-                     </Typography>
-                   </TableCell>
+      ) : isMobile ? (
+        // Mobile view - cards layout
+        <Box>
+          {paginatedWords.map(renderMobileWordCard)}
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50, 100, { label: 'All', value: -1 }]}
+            component="div"
+            count={sortedWords.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Words per page:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`}
+          />
+        </Box>
+      ) : (
+        // Desktop view - table layout
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={selectedWords.length > 0 && selectedWords.length < paginatedWords.length}
+                    checked={paginatedWords.length > 0 && selectedWords.length === paginatedWords.length}
+                    onChange={handleSelectAll}
+                  />
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSort('originalWord')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Original Word {sortConfig.key === 'originalWord' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSort('translation')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Translation {sortConfig.key === 'translation' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSort('language')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Language {sortConfig.key === 'language' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell 
+                  onClick={() => handleSort('proficiencyLevel')}
+                  sx={{ cursor: 'pointer', '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  Proficiency {sortConfig.key === 'proficiencyLevel' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </TableCell>
+                <TableCell>Example Usage</TableCell>
+                <TableCell>Explanation</TableCell>
+                <TableCell align="center">Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {paginatedWords.map((word) => (
+                <TableRow key={word.id}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedWords.includes(word.id)}
+                      onChange={() => handleSelectWord(word.id)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="body1" fontWeight="bold">
+                      {word.originalWord}
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     <Typography variant="body1">
                       {word.translation}
@@ -512,28 +666,28 @@ const WordList = () => {
                       size="small"
                     />
                   </TableCell>
-                                     <TableCell>
-                     {word.exampleUsage ? (
-                       <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
-                         {word.exampleUsage}
-                       </Typography>
-                     ) : (
-                       <Typography variant="body2" color="text.secondary">
-                         No example
-                       </Typography>
-                     )}
-                   </TableCell>
-                   <TableCell>
-                     {word.explanation ? (
-                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                         {word.explanation}
-                       </Typography>
-                     ) : (
-                       <Typography variant="body2" color="text.secondary">
-                         No explanation
-                       </Typography>
-                     )}
-                   </TableCell>
+                  <TableCell>
+                    {word.exampleUsage ? (
+                      <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                        {word.exampleUsage}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No example
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {word.explanation ? (
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {word.explanation}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        No explanation
+                      </Typography>
+                    )}
+                  </TableCell>
                   <TableCell align="center">
                     <IconButton
                       component={Link}
@@ -551,25 +705,25 @@ const WordList = () => {
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
-                                 </TableRow>
-               ))}
-             </TableBody>
-           </Table>
-           <TablePagination
-             rowsPerPageOptions={[10, 25, 50, 100, { label: 'All', value: -1 }]}
-             component="div"
-             count={sortedWords.length}
-             rowsPerPage={rowsPerPage}
-             page={page}
-             onPageChange={handleChangePage}
-             onRowsPerPageChange={handleChangeRowsPerPage}
-             labelRowsPerPage="Words per page:"
-             labelDisplayedRows={({ from, to, count }) => `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`}
-           />
-         </TableContainer>
-       )}
-     </Container>
-   );
- };
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <TablePagination
+            rowsPerPageOptions={[10, 25, 50, 100, { label: 'All', value: -1 }]}
+            component="div"
+            count={sortedWords.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="Words per page:"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`}
+          />
+        </TableContainer>
+      )}
+    </Container>
+  );
+};
 
 export default WordList; 
