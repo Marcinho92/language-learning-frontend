@@ -207,7 +207,7 @@ const GrammarPractice = () => {
           <Typography variant="h6" gutterBottom>
             Grammar Explanation
           </Typography>
-          <Typography variant="body1" paragraph>
+          <Typography variant="body1" paragraph sx={{ whiteSpace: 'pre-line' }}>
             {result.explanation}
           </Typography>
           
