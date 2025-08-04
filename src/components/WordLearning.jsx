@@ -192,7 +192,7 @@ const WordLearning = () => {
                 </Box>
               )}
               
-              {result.explanation && (
+              {result.explanation && !result.correct && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                     Explanation:
