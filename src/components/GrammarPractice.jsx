@@ -210,11 +210,22 @@ const GrammarPractice = () => {
       {result && (
         <Paper sx={{ p: 3, mt: 3 }}>
           <Alert 
-            severity={result.isCorrect ? 'success' : 'warning'} 
+            severity={result.correct ? 'success' : 'warning'} 
             sx={{ mb: 2 }}
           >
             {result.feedback}
           </Alert>
+          
+          {result.explanation && !result.correct && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                Explanation:
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'text.secondary', whiteSpace: 'pre-line' }}>
+                {result.explanation}
+              </Typography>
+            </Box>
+          )}
           
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
             <Button
