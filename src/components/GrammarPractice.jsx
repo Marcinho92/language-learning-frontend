@@ -11,8 +11,11 @@ import {
   CardContent,
   Chip,
   Divider,
-  CircularProgress
+  CircularProgress,
+  Collapse,
+  IconButton
 } from '@mui/material';
+import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const GrammarPractice = () => {
@@ -22,6 +25,7 @@ const GrammarPractice = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [wordDetailsExpanded, setWordDetailsExpanded] = useState(false);
   const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
@@ -88,6 +92,7 @@ const GrammarPractice = () => {
   const handleNextPractice = () => {
     setResult(null);
     setUserSentence('');
+    setWordDetailsExpanded(false);
     fetchRandomGrammarPractice();
   };
 
@@ -120,16 +125,9 @@ const GrammarPractice = () => {
       {currentPractice && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" component="div">
-                Practice Task
-              </Typography>
-              <Chip 
-                label={currentPractice.grammarTopic} 
-                color="primary" 
-                variant="outlined"
-              />
-            </Box>
+            <Typography variant="h6" component="div" sx={{ mb: 2 }}>
+              Practice Task
+            </Typography>
             
             <Divider sx={{ mb: 2 }} />
             
@@ -148,6 +146,43 @@ const GrammarPractice = () => {
                   Language: {currentPractice.word.language}
                 </Typography>
               )}
+              
+              <Box sx={{ mt: 2 }}>
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={() => setWordDetailsExpanded(!wordDetailsExpanded)}
+                  endIcon={wordDetailsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                >
+                  Show word details
+                </Button>
+                
+                <Collapse in={wordDetailsExpanded}>
+                  <Box sx={{ mt: 2, pl: 2, borderLeft: 2, borderColor: 'divider' }}>
+                    {currentPractice.word.exampleUsage && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="body2" fontWeight="bold" gutterBottom>
+                          Example Usage:
+                        </Typography>
+                        <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                          {currentPractice.word.exampleUsage}
+                        </Typography>
+                      </Box>
+                    )}
+                    
+                    {currentPractice.word.explanation && (
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold" gutterBottom>
+                          Explanation:
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {currentPractice.word.explanation}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Collapse>
+              </Box>
             </Box>
 
             <Typography variant="body1" gutterBottom>
@@ -216,15 +251,30 @@ const GrammarPractice = () => {
             {result.feedback}
           </Alert>
           
-          {result.explanation && !result.correct && (
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                Explanation:
-              </Typography>
-              <Typography variant="body1" sx={{ color: 'text.secondary', whiteSpace: 'pre-line' }}>
-                {result.explanation}
-              </Typography>
-            </Box>
+          {!result.correct && (
+            <>
+              {result.explanation && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Explanation:
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'text.secondary', whiteSpace: 'pre-line' }}>
+                    {result.explanation}
+                  </Typography>
+                </Box>
+              )}
+              
+              {result.correction && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                    Corrected Version:
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                    {result.correction}
+                  </Typography>
+                </Box>
+              )}
+            </>
           )}
           
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
