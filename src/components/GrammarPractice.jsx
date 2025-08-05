@@ -98,10 +98,46 @@ const GrammarPractice = () => {
 
   const playAudio = (audioUrl) => {
     if (audioUrl) {
-      const audio = new Audio(audioUrl);
-      audio.play().catch(error => {
+      try {
+        // Check if the URL is base64 encoded
+        if (audioUrl.startsWith('data:audio/') || audioUrl.includes('base64')) {
+          // It's already a data URL, use it directly
+          const audio = new Audio(audioUrl);
+          audio.play().catch(error => {
+            console.error('Error playing audio:', error);
+          });
+        } else {
+          // Try to decode base64 if it's not a data URL
+          try {
+            // Remove any URL prefix and decode base64
+            const base64Data = audioUrl.replace(/^data:audio\/[^;]+;base64,/, '');
+            const binaryString = atob(base64Data);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            const blob = new Blob([bytes], { type: 'audio/mpeg' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            const audio = new Audio(blobUrl);
+            audio.play().catch(error => {
+              console.error('Error playing audio:', error);
+            }).finally(() => {
+              // Clean up the blob URL after a delay
+              setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+            });
+          } catch (decodeError) {
+            console.error('Error decoding base64 audio:', decodeError);
+            // Fallback to direct URL
+            const audio = new Audio(audioUrl);
+            audio.play().catch(error => {
+              console.error('Error playing audio:', error);
+            });
+          }
+        }
+      } catch (error) {
         console.error('Error playing audio:', error);
-      });
+      }
     }
   };
 
