@@ -15,7 +15,7 @@ import {
   Collapse,
   IconButton
 } from '@mui/material';
-import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon } from '@mui/icons-material';
+import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, VolumeUp as VolumeUpIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
 const GrammarPractice = () => {
@@ -94,6 +94,15 @@ const GrammarPractice = () => {
     setUserSentence('');
     setWordDetailsExpanded(false);
     fetchRandomGrammarPractice();
+  };
+
+  const playAudio = (audioUrl) => {
+    if (audioUrl) {
+      const audio = new Audio(audioUrl);
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+      });
+    }
   };
 
   useEffect(() => {
@@ -251,30 +260,42 @@ const GrammarPractice = () => {
             {result.feedback}
           </Alert>
           
-          {!result.correct && (
-            <>
-              {result.explanation && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Explanation:
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'text.secondary', whiteSpace: 'pre-line' }}>
-                    {result.explanation}
-                  </Typography>
-                </Box>
-              )}
-              
-              {result.correction && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Corrected Version:
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: 'success.main', fontWeight: 'bold' }}>
-                    {result.correction}
-                  </Typography>
-                </Box>
-              )}
-            </>
+          {result.explanation && !result.correct && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                Explanation:
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'text.secondary', whiteSpace: 'pre-line' }}>
+                {result.explanation}
+              </Typography>
+            </Box>
+          )}
+          
+          {result.correction && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                {result.correct ? 'Your Sentence:' : 'Corrected Version:'}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="body1" sx={{ 
+                  color: result.correct ? 'text.primary' : 'success.main', 
+                  fontWeight: 'bold',
+                  flex: 1
+                }}>
+                  {result.correction}
+                </Typography>
+                {result.audioUrl && (
+                  <IconButton
+                    onClick={() => playAudio(result.audioUrl)}
+                    size="small"
+                    color="primary"
+                    sx={{ ml: 1 }}
+                  >
+                    <VolumeUpIcon />
+                  </IconButton>
+                )}
+              </Box>
+            </Box>
           )}
           
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
