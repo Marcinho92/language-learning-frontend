@@ -236,21 +236,23 @@ const Practice = () => {
           </form>
           {verifyError && <div className="alert alert-danger mt-4">{verifyError}</div>}
           {verifyResult && (
-            <div className={`alert mt-4 ${verifyResult.isCorrect ? 'alert-success' : 'alert-warning'}`}>
+            <div className={`alert mt-4 ${verifyResult.correct ? 'alert-success' : 'alert-warning'}`}>
               <h5 className="mb-3">
-                {verifyResult.isCorrect ? '✅ Tłumaczenie poprawne!' : '❌ Tłumaczenie niepoprawne'}
+                {verifyResult.correct ? '✅ Tłumaczenie jest poprawne!' : '❌ Tłumaczenie niepoprawne'}
               </h5>
               <div className="mb-3">
                 <strong>Feedback:</strong> {verifyResult.feedback}
               </div>
-              {!verifyResult.isCorrect && (
-                <div className="mb-3">
-                  <strong>Poprawne tłumaczenie:</strong> {verifyResult.correctTranslation}
-                </div>
+              {!verifyResult.correct && (
+                <>
+                  <div className="mb-3">
+                    <strong>Poprawne tłumaczenie:</strong> {verifyResult.correctTranslation}
+                  </div>
+                  <div>
+                    <strong>Wyjaśnienie:</strong> {verifyResult.explanation}
+                  </div>
+                </>
               )}
-              <div>
-                <strong>Wyjaśnienie:</strong> {verifyResult.explanation}
-              </div>
             </div>
           )}
         </div>
