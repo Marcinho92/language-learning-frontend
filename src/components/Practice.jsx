@@ -23,7 +23,7 @@ const Practice = () => {
     setError('');
     setExerciseText('');
     try {
-      const response = await fetch('/api/practice/generate', {
+      const response = await fetch('https://language-learning-backend-production-3ce3.up.railway.app/api/practice/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
