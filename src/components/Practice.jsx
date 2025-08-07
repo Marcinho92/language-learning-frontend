@@ -1,11 +1,20 @@
 import React, { useState } from 'react';
 
+const LANGUAGES = [
+  { value: 'polski', label: 'Polski' },
+  { value: 'english', label: 'English' },
+  { value: 'deutsch', label: 'Deutsch' },
+  { value: 'français', label: 'Français' },
+  { value: 'español', label: 'Español' },
+];
+const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
 const Practice = () => {
   const [form, setForm] = useState({
-    sourceLanguage: '',
-    targetLanguage: '',
-    level: '',
-    sentenceCount: 5,
+    sourceLanguage: 'polski',
+    targetLanguage: 'english',
+    level: 'B2',
+    sentenceCount: 1,
     topic: ''
   });
   const [loading, setLoading] = useState(false);
@@ -39,38 +48,90 @@ const Practice = () => {
   };
 
   return (
-    <div style={{ maxWidth: 600, margin: '0 auto' }}>
-      <h2>Practice - Generator tekstu ćwiczeniowego</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <label>
-          Język źródłowy:
-          <input name="sourceLanguage" value={form.sourceLanguage} onChange={handleChange} required />
-        </label>
-        <label>
-          Język docelowy:
-          <input name="targetLanguage" value={form.targetLanguage} onChange={handleChange} required />
-        </label>
-        <label>
-          Poziom:
-          <input name="level" value={form.level} onChange={handleChange} required />
-        </label>
-        <label>
-          Liczba zdań:
-          <input name="sentenceCount" type="number" min={1} max={20} value={form.sentenceCount} onChange={handleChange} required />
-        </label>
-        <label>
-          Temat (opcjonalnie):
-          <input name="topic" value={form.topic} onChange={handleChange} />
-        </label>
-        <button type="submit" disabled={loading}>{loading ? 'Generowanie...' : 'Generuj tekst'}</button>
-      </form>
-      {error && <div style={{ color: 'red', marginTop: 16 }}>{error}</div>}
-      {exerciseText && (
-        <div style={{ marginTop: 24 }}>
-          <h3>Wygenerowany tekst:</h3>
-          <pre style={{ background: '#f4f4f4', padding: 16 }}>{exerciseText}</pre>
+    <div className="container my-5" style={{ maxWidth: 700 }}>
+      <div className="card shadow">
+        <div className="card-body">
+          <h2 className="card-title mb-4">Practice - Generator tekstu ćwiczeniowego</h2>
+          <form onSubmit={handleSubmit} className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label">Język źródłowy</label>
+              <select
+                className="form-select"
+                name="sourceLanguage"
+                value={form.sourceLanguage}
+                onChange={handleChange}
+                required
+              >
+                {LANGUAGES.map(lang => (
+                  <option key={lang.value} value={lang.value}>{lang.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Język docelowy</label>
+              <select
+                className="form-select"
+                name="targetLanguage"
+                value={form.targetLanguage}
+                onChange={handleChange}
+                required
+              >
+                {LANGUAGES.map(lang => (
+                  <option key={lang.value} value={lang.value}>{lang.label}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Poziom</label>
+              <select
+                className="form-select"
+                name="level"
+                value={form.level}
+                onChange={handleChange}
+                required
+              >
+                {LEVELS.map(level => (
+                  <option key={level} value={level}>{level}</option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label">Liczba zdań</label>
+              <input
+                className="form-control"
+                name="sentenceCount"
+                type="number"
+                min={1}
+                max={20}
+                value={form.sentenceCount}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            <div className="col-12">
+              <label className="form-label">Temat (opcjonalnie)</label>
+              <input
+                className="form-control"
+                name="topic"
+                value={form.topic}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="col-12 d-flex justify-content-end">
+              <button type="submit" className="btn btn-primary px-4" disabled={loading}>
+                {loading ? 'Generowanie...' : 'Generuj tekst'}
+              </button>
+            </div>
+          </form>
+          {error && <div className="alert alert-danger mt-4">{error}</div>}
+          {exerciseText && (
+            <div className="alert alert-success mt-5" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '1.15rem' }}>
+              <h5 className="mb-3">Wygenerowany tekst:</h5>
+              {exerciseText}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
