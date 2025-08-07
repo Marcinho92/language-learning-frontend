@@ -7,6 +7,7 @@ import GrammarPractice from './components/GrammarPractice.jsx';
 import AddWord from './components/AddWord.jsx';
 import EditWord from './components/EditWord.jsx';
 import Navigation from './components/Navigation.jsx';
+import Practice from './components/Practice';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -53,6 +54,7 @@ function App() {
             <Route path="/words" element={<WordList />} />
             <Route path="/learn" element={<WordLearning />} />
             <Route path="/grammar" element={<GrammarPractice />} />
+            <Route path="/practice" element={<Practice />} />
             <Route path="/add" element={<AddWord />} />
             <Route path="/edit/:id" element={<EditWord />} />
             <Route path="/" element={<WordList />} />

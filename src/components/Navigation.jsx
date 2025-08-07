@@ -61,6 +61,14 @@ const Navigation = () => {
           >
             Add Word
           </Button>
+          <Button
+            component={Link}
+            to="/practice"
+            color="inherit"
+            variant={isActive('/practice') ? 'contained' : 'text'}
+          >
+            Practice
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>
