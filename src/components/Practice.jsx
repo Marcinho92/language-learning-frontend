@@ -36,6 +36,9 @@ const Practice = () => {
   const [isRecordingSource, setIsRecordingSource] = useState(false);
   const [isRecordingTranslation, setIsRecordingTranslation] = useState(false);
 
+  // Stan dla zwijania/rozwijania generatora
+  const [isGeneratorExpanded, setIsGeneratorExpanded] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -44,6 +47,16 @@ const Practice = () => {
   const handleVerifyChange = (e) => {
     const { name, value } = e.target;
     setVerifyForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Funkcja do kopiowania wygenerowanego tekstu
+  const copyToSourceText = () => {
+    if (exerciseText) {
+      setVerifyForm(prev => ({
+        ...prev,
+        sourceText: exerciseText.trim()
+      }));
+    }
   };
 
   // Funkcja do rozpoznawania mowy
@@ -145,89 +158,111 @@ const Practice = () => {
 
   return (
     <div className="container my-5" style={{ maxWidth: 700 }}>
-      {/* Generator tekstu ćwiczeniowego */}
+      {/* Generator tekstu ćwiczeniowego - zwijany */}
       <div className="card shadow mb-5">
-        <div className="card-body">
-          <h2 className="card-title mb-4">Practice - Generator tekstu ćwiczeniowego</h2>
-          <form onSubmit={handleSubmit} className="row g-3">
-            <div className="col-md-6">
-              <label className="form-label">Język źródłowy</label>
-              <select
-                className="form-select"
-                name="sourceLanguage"
-                value={form.sourceLanguage}
-                onChange={handleChange}
-                required
-              >
-                {LANGUAGES.map(lang => (
-                  <option key={lang.value} value={lang.value}>{lang.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-6">
-              <label className="form-label">Język docelowy</label>
-              <select
-                className="form-select"
-                name="targetLanguage"
-                value={form.targetLanguage}
-                onChange={handleChange}
-                required
-              >
-                {LANGUAGES.map(lang => (
-                  <option key={lang.value} value={lang.value}>{lang.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-6">
-              <label className="form-label">Poziom</label>
-              <select
-                className="form-select"
-                name="level"
-                value={form.level}
-                onChange={handleChange}
-                required
-              >
-                {LEVELS.map(level => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
-              </select>
-            </div>
-            <div className="col-md-6">
-              <label className="form-label">Liczba zdań</label>
-              <input
-                className="form-control"
-                name="sentenceCount"
-                type="number"
-                min={1}
-                max={20}
-                value={form.sentenceCount}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="col-12">
-              <label className="form-label">Temat (opcjonalnie)</label>
-              <input
-                className="form-control"
-                name="topic"
-                value={form.topic}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="col-12 d-flex justify-content-end">
-              <button type="submit" className="btn btn-primary px-4" disabled={loading}>
-                {loading ? 'Generowanie...' : 'Generuj tekst'}
-              </button>
-            </div>
-          </form>
-          {error && <div className="alert alert-danger mt-4">{error}</div>}
-          {exerciseText && (
-            <div className="alert alert-success mt-5" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '1.15rem' }}>
-              <h5 className="mb-3">Wygenerowany tekst:</h5>
-              {exerciseText}
-            </div>
-          )}
+        <div className="card-header bg-light">
+          <div className="d-flex justify-content-between align-items-center">
+            <h5 className="mb-0">Generator tekstu ćwiczeniowego</h5>
+            <button
+              type="button"
+              className="btn btn-outline-primary btn-sm"
+              onClick={() => setIsGeneratorExpanded(!isGeneratorExpanded)}
+            >
+              {isGeneratorExpanded ? '▼ Ukryj' : '▶ Pokaż'}
+            </button>
+          </div>
         </div>
+        {isGeneratorExpanded && (
+          <div className="card-body">
+            <form onSubmit={handleSubmit} className="row g-3">
+              <div className="col-md-6">
+                <label className="form-label">Język źródłowy</label>
+                <select
+                  className="form-select"
+                  name="sourceLanguage"
+                  value={form.sourceLanguage}
+                  onChange={handleChange}
+                  required
+                >
+                  {LANGUAGES.map(lang => (
+                    <option key={lang.value} value={lang.value}>{lang.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Język docelowy</label>
+                <select
+                  className="form-select"
+                  name="targetLanguage"
+                  value={form.targetLanguage}
+                  onChange={handleChange}
+                  required
+                >
+                  {LANGUAGES.map(lang => (
+                    <option key={lang.value} value={lang.value}>{lang.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Poziom</label>
+                <select
+                  className="form-select"
+                  name="level"
+                  value={form.level}
+                  onChange={handleChange}
+                  required
+                >
+                  {LEVELS.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="col-md-6">
+                <label className="form-label">Liczba zdań</label>
+                <input
+                  className="form-control"
+                  name="sentenceCount"
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={form.sentenceCount}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div className="col-12">
+                <label className="form-label">Temat (opcjonalnie)</label>
+                <input
+                  className="form-control"
+                  name="topic"
+                  value={form.topic}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-12 d-flex justify-content-end">
+                <button type="submit" className="btn btn-primary px-4" disabled={loading}>
+                  {loading ? 'Generowanie...' : 'Generuj tekst'}
+                </button>
+              </div>
+            </form>
+            {error && <div className="alert alert-danger mt-4">{error}</div>}
+            {exerciseText && (
+              <div className="alert alert-success mt-5" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '1.15rem' }}>
+                <div className="d-flex justify-content-between align-items-start mb-3">
+                  <h5 className="mb-0">Wygenerowany tekst:</h5>
+                  <button
+                    type="button"
+                    className="btn btn-outline-success btn-sm"
+                    onClick={copyToSourceText}
+                  >
+                    📋 Użyj do tłumaczenia
+                  </button>
+                </div>
+                {exerciseText}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Weryfikacja tłumaczeń */}
