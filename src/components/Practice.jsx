@@ -32,6 +32,10 @@ const Practice = () => {
   const [verifyResult, setVerifyResult] = useState(null);
   const [verifyError, setVerifyError] = useState('');
 
+  // Stan dla rozpoznawania mowy
+  const [isRecordingSource, setIsRecordingSource] = useState(false);
+  const [isRecordingTranslation, setIsRecordingTranslation] = useState(false);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -40,6 +44,61 @@ const Practice = () => {
   const handleVerifyChange = (e) => {
     const { name, value } = e.target;
     setVerifyForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Funkcja do rozpoznawania mowy
+  const startSpeechRecognition = (fieldName) => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Twoja przeglądarka nie obsługuje rozpoznawania mowy.');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    
+    // Ustaw język na podstawie wybranego języka
+    const languageMap = {
+      'polski': 'pl-PL',
+      'english': 'en-US',
+      'deutsch': 'de-DE',
+      'français': 'fr-FR',
+      'español': 'es-ES'
+    };
+    
+    recognition.lang = fieldName === 'sourceText' 
+      ? languageMap[verifyForm.sourceLanguage] || 'en-US'
+      : languageMap[verifyForm.targetLanguage] || 'en-US';
+    
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => {
+      if (fieldName === 'sourceText') {
+        setIsRecordingSource(true);
+      } else {
+        setIsRecordingTranslation(true);
+      }
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setVerifyForm(prev => ({
+        ...prev,
+        [fieldName]: prev[fieldName] + ' ' + transcript
+      }));
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Błąd rozpoznawania mowy:', event.error);
+      alert('Błąd rozpoznawania mowy: ' + event.error);
+    };
+
+    recognition.onend = () => {
+      setIsRecordingSource(false);
+      setIsRecordingTranslation(false);
+    };
+
+    recognition.start();
   };
 
   const handleSubmit = async (e) => {
@@ -206,27 +265,47 @@ const Practice = () => {
             </div>
             <div className="col-12">
               <label className="form-label">Tekst do przetłumaczenia</label>
-              <textarea
-                className="form-control"
-                name="sourceText"
-                value={verifyForm.sourceText}
-                onChange={handleVerifyChange}
-                rows={3}
-                placeholder="Wpisz tekst do przetłumaczenia..."
-                required
-              />
+              <div className="input-group">
+                <textarea
+                  className="form-control"
+                  name="sourceText"
+                  value={verifyForm.sourceText}
+                  onChange={handleVerifyChange}
+                  rows={3}
+                  placeholder="Wpisz tekst do przetłumaczenia lub użyj mikrofonu..."
+                  required
+                />
+                <button
+                  type="button"
+                  className={`btn ${isRecordingSource ? 'btn-danger' : 'btn-outline-secondary'}`}
+                  onClick={() => startSpeechRecognition('sourceText')}
+                  disabled={isRecordingSource}
+                >
+                  {isRecordingSource ? '🔴' : '🎤'}
+                </button>
+              </div>
             </div>
             <div className="col-12">
               <label className="form-label">Twoje tłumaczenie</label>
-              <textarea
-                className="form-control"
-                name="userTranslation"
-                value={verifyForm.userTranslation}
-                onChange={handleVerifyChange}
-                rows={3}
-                placeholder="Wpisz swoje tłumaczenie..."
-                required
-              />
+              <div className="input-group">
+                <textarea
+                  className="form-control"
+                  name="userTranslation"
+                  value={verifyForm.userTranslation}
+                  onChange={handleVerifyChange}
+                  rows={3}
+                  placeholder="Wpisz swoje tłumaczenie lub użyj mikrofonu..."
+                  required
+                />
+                <button
+                  type="button"
+                  className={`btn ${isRecordingTranslation ? 'btn-danger' : 'btn-outline-secondary'}`}
+                  onClick={() => startSpeechRecognition('userTranslation')}
+                  disabled={isRecordingTranslation}
+                >
+                  {isRecordingTranslation ? '🔴' : '🎤'}
+                </button>
+              </div>
             </div>
             <div className="col-12 d-flex justify-content-end">
               <button type="submit" className="btn btn-success px-4" disabled={verifyLoading}>
