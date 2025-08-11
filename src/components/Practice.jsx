@@ -357,15 +357,15 @@ const Practice = () => {
               <div className="mb-3">
                 <strong>Feedback:</strong> {verifyResult.feedback}
               </div>
-              {!verifyResult.isCorrect && (
-                <>
-                  <div className="mb-3">
-                    <strong>Poprawne tłumaczenie:</strong> {verifyResult.correctTranslation}
-                  </div>
-                  <div>
-                    <strong>Wyjaśnienie:</strong> {verifyResult.explanation}
-                  </div>
-                </>
+              {verifyResult.explanation && (
+                <div className="mb-3">
+                  <strong>Wyjaśnienie:</strong> {verifyResult.explanation}
+                </div>
+              )}
+              {!verifyResult.isCorrect && verifyResult.correctTranslation && (
+                <div className="mb-3">
+                  <strong>Poprawne tłumaczenie:</strong> {verifyResult.correctTranslation}
+                </div>
               )}
             </div>
           )}
