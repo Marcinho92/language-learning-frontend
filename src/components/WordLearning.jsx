@@ -36,18 +36,20 @@ const WordLearning = () => {
         queryParams.append('language', filters.language);
       }
       
-      // Sprawdź cache dla losowego słowa
-      const cacheKey = getCacheKey(`${apiUrl}/api/words/random`, { language: filters.language });
-      const cachedData = getCachedData(cacheKey);
+      // Nie cachuj losowych słów - zawsze pobierz nowe
+      // const cacheKey = getCacheKey(`${apiUrl}/api/words/random`, { language: filters.language });
+      // const cachedData = getCachedData(cacheKey);
       
-      if (cachedData && !cachedData.isEmpty) {
-        setCurrentWord(cachedData);
-        setTranslation('');
-        setResult(null);
-        setError('');
-        return;
-      }
+      // if (cachedData && !cachedData.isEmpty) {
+      //   setCurrentWord(cachedData);
+      //   setTranslation('');
+      //   setResult(null);
+      //   setError('');
+      //   return;
+      // }
       
+      // Dodaj timestamp aby wymusić nowe pobieranie (zapobiega cache'owaniu)
+      queryParams.append('_t', Date.now());
       const response = await fetch(`${apiUrl}/api/words/random?${queryParams}`);
       
       if (response.ok) {
@@ -62,8 +64,8 @@ const WordLearning = () => {
           setTranslation('');
           setResult(null);
           setError('');
-          // Zapisz w cache (tylko jeśli nie jest puste)
-          setCachedData(cacheKey, data);
+          // Nie cachuj losowych słów
+          // setCachedData(cacheKey, data);
         }
       } else {
         const errorData = await response.json();
@@ -92,6 +94,16 @@ const WordLearning = () => {
 
       const data = await response.json();
       setResult(data);
+      
+      // Jeśli odpowiedź jest poprawna, zaktualizuj poziom biegłości
+      if (data.correct) {
+        // Pobierz zaktualizowane słowo z nowym poziomem biegłości
+        const updatedWordResponse = await fetch(`${apiUrl}/api/words/${currentWord.id}`);
+        if (updatedWordResponse.ok) {
+          const updatedWord = await updatedWordResponse.json();
+          setCurrentWord(updatedWord);
+        }
+      }
     } catch (error) {
       console.error('Error checking translation:', error);
       setResult({ correct: false, message: 'Error checking translation' });
