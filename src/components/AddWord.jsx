@@ -13,6 +13,7 @@ import {
   Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { clearCache } from '../utils/apiCache';
 
 const AddWord = () => {
   const [formData, setFormData] = useState({
@@ -52,13 +53,15 @@ const AddWord = () => {
 
       if (response.ok) {
         setSuccess('Word added successfully!');
-                 setFormData({
-           originalWord: '',
-           translation: '',
-           language: '',
-           exampleUsage: '',
-           explanation: ''
-         });
+        // Wyczyść cache po dodaniu nowego słowa
+        clearCache();
+        setFormData({
+          originalWord: '',
+          translation: '',
+          language: '',
+          exampleUsage: '',
+          explanation: ''
+        });
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to add word');
@@ -110,12 +113,14 @@ const AddWord = () => {
           />
 
           <FormControl fullWidth margin="normal" required>
-            <InputLabel>Language</InputLabel>
+            <InputLabel id="language-label">Language</InputLabel>
             <Select
               name="language"
               value={formData.language}
               onChange={handleChange}
               label="Language"
+              labelId="language-label"
+              aria-label="Select language"
             >
               <MenuItem value="english">English</MenuItem>
               <MenuItem value="polish">Polish</MenuItem>

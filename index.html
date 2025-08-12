@@ -3,12 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Language Learning</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Cache control -->
+    <meta http-equiv="Cache-Control" content="max-age=31536000, immutable">
+    <meta http-equiv="Expires" content="Thu, 31 Dec 2024 23:59:59 GMT">
+    
+    <!-- Critical CSS inline -->
+    <style>
+      /* Critical styles for initial render */
+      body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+      #root { min-height: 100vh; }
+      .loading { display: flex; justify-content: center; align-items: center; height: 100vh; }
+      .loading::after { content: 'Loading...'; font-size: 18px; color: #666; }
+    </style>
+    
+    <!-- Preload dla backendu -->
+    <link rel="preconnect" href="https://language-learning-backend-production-3ce3.up.railway.app">
+    <link rel="dns-prefetch" href="https://language-learning-backend-production-3ce3.up.railway.app">
+    
+    <!-- Preload krytycznych komponentów -->
+    <link rel="modulepreload" href="/src/components/Navigation.jsx">
+    <link rel="modulepreload" href="/src/components/WordList.jsx">
+
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Loading state - rendered immediately -->
+      <div class="loading">
+        <div style="text-align: center; padding: 2rem;">
+          <h1 style="color: #1976d2; margin-bottom: 1rem;">Language Learning</h1>
+          <p style="color: #666;">Loading your language learning experience...</p>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/index.jsx"></script>
   </body>
 </html> 

@@ -14,6 +14,7 @@ import {
   Alert,
   Rating
 } from '@mui/material';
+import { getCachedData, setCachedData, getCacheKey, clearCache } from '../utils/apiCache';
 
 const EditWord = () => {
   const { id } = useParams();
@@ -39,18 +40,38 @@ const EditWord = () => {
 
   const fetchWord = async () => {
     try {
+      // Sprawdź cache dla konkretnego słowa
+      const cacheKey = getCacheKey(`${apiUrl}/api/words/${id}`);
+      const cachedData = getCachedData(cacheKey);
+      
+      if (cachedData) {
+        setWord(cachedData);
+        setFormData({
+          originalWord: cachedData.originalWord || '',
+          translation: cachedData.translation || '',
+          language: cachedData.language || '',
+          exampleUsage: cachedData.exampleUsage || '',
+          explanation: cachedData.explanation || '',
+          proficiencyLevel: cachedData.proficiencyLevel || 1
+        });
+        setLoading(false);
+        return;
+      }
+      
       const response = await fetch(`${apiUrl}/api/words/${id}`);
       if (response.ok) {
         const data = await response.json();
         setWord(data);
-                                   setFormData({
-            originalWord: data.originalWord || '',
-            translation: data.translation || '',
-            language: data.language || '',
-            exampleUsage: data.exampleUsage || '',
-            explanation: data.explanation || '',
-            proficiencyLevel: data.proficiencyLevel || 1
-          });
+        setFormData({
+          originalWord: data.originalWord || '',
+          translation: data.translation || '',
+          language: data.language || '',
+          exampleUsage: data.exampleUsage || '',
+          explanation: data.explanation || '',
+          proficiencyLevel: data.proficiencyLevel || 1
+        });
+        // Zapisz w cache
+        setCachedData(cacheKey, data);
       } else {
         setError('Word not found');
       }
@@ -86,6 +107,8 @@ const EditWord = () => {
 
       if (response.ok) {
         setSuccess('Word updated successfully!');
+        // Wyczyść cache po edycji słowa
+        clearCache();
         setTimeout(() => {
           navigate('/words');
         }, 1500);
@@ -188,12 +211,14 @@ const EditWord = () => {
           />
 
           <FormControl fullWidth margin="normal" required>
-            <InputLabel>Language</InputLabel>
+            <InputLabel id="edit-language-label">Language</InputLabel>
             <Select
               name="language"
               value={formData.language}
               onChange={handleChange}
               label="Language"
+              labelId="edit-language-label"
+              aria-label="Select language for editing"
             >
               <MenuItem value="english">English</MenuItem>
               <MenuItem value="polish">Polish</MenuItem>
@@ -237,6 +262,7 @@ const EditWord = () => {
                 }));
               }}
               max={5}
+              aria-label={`Set proficiency level to ${parseInt(formData.proficiencyLevel)} out of 5`}
             />
           </Box>
 

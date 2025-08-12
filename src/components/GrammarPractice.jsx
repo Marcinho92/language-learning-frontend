@@ -326,6 +326,7 @@ const GrammarPractice = () => {
                     size="small"
                     color="primary"
                     sx={{ ml: 1 }}
+                    aria-label="Play audio pronunciation"
                   >
                     <VolumeUpIcon />
                   </IconButton>

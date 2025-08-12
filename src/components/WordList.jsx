@@ -40,6 +40,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
+import { getCachedData, setCachedData, getCacheKey, clearCache } from '../utils/apiCache';
 
 const WordList = () => {
   const [words, setWords] = useState([]);
@@ -70,11 +71,24 @@ const WordList = () => {
   const fetchWords = async () => {
     try {
       setError('');
+      
+      // Sprawdź cache
+      const cacheKey = getCacheKey(`${apiUrl}/api/words`);
+      const cachedData = getCachedData(cacheKey);
+      
+      if (cachedData) {
+        setWords(cachedData);
+        setLoading(false);
+        return;
+      }
+      
       const response = await fetch(`${apiUrl}/api/words`);
       
       if (response.ok) {
         const data = await response.json();
         setWords(data);
+        // Zapisz w cache
+        setCachedData(cacheKey, data);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to fetch words');
@@ -105,6 +119,8 @@ const WordList = () => {
           newSet.delete(id);
           return newSet;
         });
+        // Wyczyść cache po usunięciu słowa
+        clearCache();
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to delete word');
@@ -136,6 +152,8 @@ const WordList = () => {
         setWords(words.filter(word => !selectedWords.includes(word.id)));
         setSelectedWords([]);
         setExpandedWords(new Set());
+        // Wyczyść cache po bulk delete
+        clearCache();
         alert(`Successfully deleted ${result.deletedCount} words!`);
       } else {
         const errorData = await response.json();
@@ -338,6 +356,8 @@ const WordList = () => {
         
         if (response.ok) {
           const result = await response.json();
+          // Wyczyść cache po imporcie
+          clearCache();
           fetchWords(); // Refresh the list
           alert(`Import completed successfully! ${result.importedCount} words imported.`);
         } else {
@@ -375,6 +395,7 @@ const WordList = () => {
                   handleSelectWord(word.id);
                 }}
                 size="small"
+                aria-label={`Select ${word.originalWord} for bulk operations`}
               />
               {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </Box>
@@ -393,6 +414,7 @@ const WordList = () => {
                     max={5} 
                     readOnly 
                     size="small"
+                    aria-label={`Proficiency level: ${word.proficiencyLevel} out of 5`}
                   />
                 </Grid>
               {word.exampleUsage && (
@@ -423,6 +445,7 @@ const WordList = () => {
                     color="primary"
                     size="small"
                     onClick={(e) => e.stopPropagation()}
+                    aria-label="Edit word"
                   >
                     <EditIcon />
                   </IconButton>
@@ -433,6 +456,7 @@ const WordList = () => {
                     }}
                     color="error"
                     size="small"
+                    aria-label="Delete word"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -522,12 +546,14 @@ const WordList = () => {
             sx={{ minWidth: 200 }}
           />
           <FormControl size="small" sx={{ minWidth: 120 }}>
-            <InputLabel>Language</InputLabel>
+            <InputLabel id="wordlist-language-label">Language</InputLabel>
             <Select
               name="language"
               value={filters.language}
               onChange={handleFilterChange}
               label="Language"
+              labelId="wordlist-language-label"
+              aria-label="Filter words by language"
             >
               <MenuItem value="">All Languages</MenuItem>
               <MenuItem value="english">English</MenuItem>
@@ -590,6 +616,7 @@ const WordList = () => {
                     indeterminate={selectedWords.length > 0 && selectedWords.length < paginatedWords.length}
                     checked={paginatedWords.length > 0 && selectedWords.length === paginatedWords.length}
                     onChange={handleSelectAll}
+                    aria-label="Select all words on current page"
                   />
                 </TableCell>
                 <TableCell 
@@ -623,6 +650,7 @@ const WordList = () => {
                     <Checkbox
                       checked={selectedWords.includes(word.id)}
                       onChange={() => handleSelectWord(word.id)}
+                      aria-label={`Select ${word.originalWord} for bulk operations`}
                     />
                   </TableCell>
                   <TableCell>
@@ -642,6 +670,7 @@ const WordList = () => {
                       max={5} 
                       readOnly 
                       size="small"
+                      aria-label={`Proficiency level: ${word.proficiencyLevel} out of 5`}
                     />
                   </TableCell>
                   <TableCell>
@@ -672,6 +701,7 @@ const WordList = () => {
                       to={`/edit/${word.id}`}
                       color="primary"
                       size="small"
+                      aria-label="Edit word"
                     >
                       <EditIcon />
                     </IconButton>
@@ -679,6 +709,7 @@ const WordList = () => {
                       onClick={() => handleDelete(word.id)}
                       color="error"
                       size="small"
+                      aria-label="Delete word"
                     >
                       <DeleteIcon />
                     </IconButton>

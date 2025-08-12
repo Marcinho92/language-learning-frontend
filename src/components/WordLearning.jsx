@@ -14,6 +14,7 @@ import {
   Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { getCachedData, setCachedData, getCacheKey } from '../utils/apiCache';
 
 const WordLearning = () => {
   const [currentWord, setCurrentWord] = useState(null);
@@ -35,6 +36,18 @@ const WordLearning = () => {
         queryParams.append('language', filters.language);
       }
       
+      // Sprawdź cache dla losowego słowa
+      const cacheKey = getCacheKey(`${apiUrl}/api/words/random`, { language: filters.language });
+      const cachedData = getCachedData(cacheKey);
+      
+      if (cachedData && !cachedData.isEmpty) {
+        setCurrentWord(cachedData);
+        setTranslation('');
+        setResult(null);
+        setError('');
+        return;
+      }
+      
       const response = await fetch(`${apiUrl}/api/words/random?${queryParams}`);
       
       if (response.ok) {
@@ -49,6 +62,8 @@ const WordLearning = () => {
           setTranslation('');
           setResult(null);
           setError('');
+          // Zapisz w cache (tylko jeśli nie jest puste)
+          setCachedData(cacheKey, data);
         }
       } else {
         const errorData = await response.json();
@@ -102,12 +117,14 @@ const WordLearning = () => {
 
       <Box sx={{ mb: 4 }}>
         <FormControl sx={{ mr: 2, minWidth: 120 }}>
-          <InputLabel>Language</InputLabel>
+          <InputLabel id="learn-language-label">Language</InputLabel>
           <Select
             name="language"
             value={filters.language}
             onChange={handleFilterChange}
             label="Language"
+            labelId="learn-language-label"
+            aria-label="Select language for learning"
           >
             <MenuItem value="">All</MenuItem>
             <MenuItem value="english">English</MenuItem>
@@ -151,7 +168,7 @@ const WordLearning = () => {
             <Typography component="span" sx={{ mr: 1 }}>
               Current Proficiency:
             </Typography>
-            <Rating value={currentWord.proficiencyLevel} max={5} readOnly />
+            <Rating value={currentWord.proficiencyLevel} max={5} readOnly aria-label={`Current proficiency level: ${currentWord.proficiencyLevel} out of 5`} />
           </Box>
           <form onSubmit={handleSubmit}>
             <TextField
