@@ -31,6 +31,14 @@ const Navigation = () => {
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
             component={Link}
+            to="/add"
+            color="inherit"
+            variant={isActive('/add') ? 'contained' : 'text'}
+          >
+            Add Word
+          </Button>
+          <Button
+            component={Link}
             to="/words"
             color="inherit"
             variant={isActive('/words') || isActive('/') ? 'contained' : 'text'}
@@ -43,7 +51,7 @@ const Navigation = () => {
             color="inherit"
             variant={isActive('/learn') ? 'contained' : 'text'}
           >
-            Learn
+            Learn Words
           </Button>
           <Button
             component={Link}
@@ -52,14 +60,6 @@ const Navigation = () => {
             variant={isActive('/grammar') ? 'contained' : 'text'}
           >
             Grammar
-          </Button>
-          <Button
-            component={Link}
-            to="/add"
-            color="inherit"
-            variant={isActive('/add') ? 'contained' : 'text'}
-          >
-            Add Word
           </Button>
           <Button
             component={Link}
