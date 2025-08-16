@@ -11,16 +11,19 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert
+  Alert,
+  CircularProgress,
+  Chip
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { getCachedData, setCachedData, getCacheKey } from '../utils/apiCache';
+import { getCachedData, setCachedData, getCacheKey, clearCacheByPattern } from '../utils/apiCache';
 
 const WordLearning = () => {
   const [currentWord, setCurrentWord] = useState(null);
   const [translation, setTranslation] = useState('');
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     language: ''
   });
@@ -31,25 +34,17 @@ const WordLearning = () => {
   const fetchRandomWord = async () => {
     try {
       setError('');
+      setLoading(true);
       const queryParams = new URLSearchParams();
+      
       if (filters.language) {
         queryParams.append('language', filters.language);
       }
       
       // Nie cachuj losowych słów - zawsze pobierz nowe
-      // const cacheKey = getCacheKey(`${apiUrl}/api/words/random`, { language: filters.language });
-      // const cachedData = getCachedData(cacheKey);
-      
-      // if (cachedData && !cachedData.isEmpty) {
-      //   setCurrentWord(cachedData);
-      //   setTranslation('');
-      //   setResult(null);
-      //   setError('');
-      //   return;
-      // }
-      
       // Dodaj timestamp aby wymusić nowe pobieranie (zapobiega cache'owaniu)
       queryParams.append('_t', Date.now());
+      
       const response = await fetch(`${apiUrl}/api/words/random?${queryParams}`);
       
       if (response.ok) {
@@ -64,8 +59,9 @@ const WordLearning = () => {
           setTranslation('');
           setResult(null);
           setError('');
-          // Nie cachuj losowych słów
-          // setCachedData(cacheKey, data);
+          
+          // Wyczyść cache dla tego słowa aby wymusić aktualizację
+          clearCacheByPattern(`/api/words/${data.id}`);
         }
       } else {
         const errorData = await response.json();
@@ -76,20 +72,23 @@ const WordLearning = () => {
       console.error('Error fetching random word:', error);
       setError('Failed to fetch random word');
       setCurrentWord(null);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!currentWord) return;
+    if (!currentWord || !translation.trim()) return;
 
     try {
+      setLoading(true);
       const response = await fetch(`${apiUrl}/api/words/${currentWord.id}/check`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ translation }),
+        body: JSON.stringify({ translation: translation.trim() }),
       });
 
       const data = await response.json();
@@ -102,11 +101,16 @@ const WordLearning = () => {
         if (updatedWordResponse.ok) {
           const updatedWord = await updatedWordResponse.json();
           setCurrentWord(updatedWord);
+          
+          // Wyczyść cache dla listy słów aby odzwierciedlić zmiany
+          clearCacheByPattern('/api/words');
         }
       }
     } catch (error) {
       console.error('Error checking translation:', error);
       setResult({ correct: false, message: 'Error checking translation' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,6 +119,11 @@ const WordLearning = () => {
       ...prev,
       [e.target.name]: e.target.value
     }));
+    // Reset current word when language filter changes
+    setCurrentWord(null);
+    setTranslation('');
+    setResult(null);
+    setError('');
   };
 
   useEffect(() => {
@@ -180,8 +189,30 @@ const WordLearning = () => {
             <Typography component="span" sx={{ mr: 1 }}>
               Current Proficiency:
             </Typography>
-            <Rating value={currentWord.proficiencyLevel} max={5} readOnly aria-label={`Current proficiency level: ${currentWord.proficiencyLevel} out of 5`} />
+            <Rating 
+              value={currentWord.proficiencyLevel} 
+              max={5} 
+              readOnly 
+              aria-label={`Current proficiency level: ${currentWord.proficiencyLevel} out of 5`} 
+            />
+            <Chip 
+              label={`Level ${currentWord.proficiencyLevel}`} 
+              size="small" 
+              color="primary" 
+              sx={{ ml: 1 }}
+            />
           </Box>
+
+          {currentWord.language && (
+            <Box sx={{ mb: 2 }}>
+              <Chip 
+                label={currentWord.language} 
+                size="small" 
+                variant="outlined"
+              />
+            </Box>
+          )}
+
           <form onSubmit={handleSubmit}>
             <TextField
               fullWidth
@@ -190,6 +221,8 @@ const WordLearning = () => {
               onChange={(e) => setTranslation(e.target.value)}
               margin="normal"
               required
+              disabled={loading}
+              placeholder="Enter your translation..."
             />
             <Button
               type="submit"
@@ -197,18 +230,22 @@ const WordLearning = () => {
               color="primary"
               fullWidth
               sx={{ mt: 2 }}
+              disabled={loading || !translation.trim()}
             >
-              Check
+              {loading ? <CircularProgress size={20} /> : 'Check Translation'}
             </Button>
           </form>
+
           {result && (
-            <Box sx={{ mt: 2 }}>
-              <Typography
-                color={result.correct ? 'success.main' : 'error.main'}
-                variant="h6"
+            <Box sx={{ mt: 3 }}>
+              <Alert 
+                severity={result.correct ? 'success' : 'warning'}
+                sx={{ mb: 2 }}
               >
-                {result.message}
-              </Typography>
+                <Typography variant="h6">
+                  {result.message}
+                </Typography>
+              </Alert>
               
               {result.exampleUsage && (
                 <Box sx={{ mt: 2 }}>
@@ -221,7 +258,7 @@ const WordLearning = () => {
                 </Box>
               )}
               
-              {result.explanation && !result.correct && (
+              {result.explanation && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                     Explanation:
@@ -231,15 +268,22 @@ const WordLearning = () => {
                   </Typography>
                 </Box>
               )}
-              
-
             </Box>
           )}
         </Paper>
-      ) : !error && (
+      ) : !error && !loading && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="body1" align="center">
-            Loading...
+            No words available for selected language.
+          </Typography>
+        </Paper>
+      )}
+
+      {loading && !currentWord && (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <CircularProgress size={40} />
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            Loading random word...
           </Typography>
         </Paper>
       )}
@@ -249,6 +293,7 @@ const WordLearning = () => {
           <Button
             variant="outlined"
             onClick={fetchRandomWord}
+            disabled={loading}
             sx={{ mr: 1 }}
           >
             Next Word

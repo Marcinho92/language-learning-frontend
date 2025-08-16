@@ -10,10 +10,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert
+  Alert,
+  CircularProgress
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { clearCache } from '../utils/apiCache';
+import { clearCache, clearCacheByPattern } from '../utils/apiCache';
 
 const AddWord = () => {
   const [formData, setFormData] = useState({
@@ -25,6 +26,7 @@ const AddWord = () => {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
@@ -41,6 +43,7 @@ const AddWord = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setLoading(true);
 
     try {
       const response = await fetch(`${apiUrl}/api/words`, {
@@ -53,8 +56,12 @@ const AddWord = () => {
 
       if (response.ok) {
         setSuccess('Word added successfully!');
+        
         // Wyczyść cache po dodaniu nowego słowa
         clearCache();
+        // Dodatkowo wyczyść cache dla konkretnych endpointów
+        clearCacheByPattern('/api/words');
+        
         setFormData({
           originalWord: '',
           translation: '',
@@ -62,14 +69,33 @@ const AddWord = () => {
           exampleUsage: '',
           explanation: ''
         });
+        
+        // Przekieruj do listy słów po 2 sekundach
+        setTimeout(() => {
+          navigate('/words');
+        }, 2000);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to add word');
       }
     } catch (error) {
       console.error('Error adding word:', error);
-      setError('Failed to add word');
+      setError('Failed to add word. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleReset = () => {
+    setFormData({
+      originalWord: '',
+      translation: '',
+      language: '',
+      exampleUsage: '',
+      explanation: ''
+    });
+    setError('');
+    setSuccess('');
   };
 
   return (
@@ -100,8 +126,9 @@ const AddWord = () => {
             onChange={handleChange}
             margin="normal"
             required
+            disabled={loading}
+            placeholder="Enter the word in original language"
           />
-
           <TextField
             fullWidth
             label="Translation"
@@ -110,8 +137,9 @@ const AddWord = () => {
             onChange={handleChange}
             margin="normal"
             required
+            disabled={loading}
+            placeholder="Enter the translation"
           />
-
           <FormControl fullWidth margin="normal" required>
             <InputLabel id="language-label">Language</InputLabel>
             <Select
@@ -120,7 +148,7 @@ const AddWord = () => {
               onChange={handleChange}
               label="Language"
               labelId="language-label"
-              aria-label="Select language"
+              disabled={loading}
             >
               <MenuItem value="english">English</MenuItem>
               <MenuItem value="polish">Polish</MenuItem>
@@ -128,45 +156,47 @@ const AddWord = () => {
               <MenuItem value="german">German</MenuItem>
             </Select>
           </FormControl>
-
           <TextField
             fullWidth
-            label="Example Usage (optional)"
+            label="Example Usage (Optional)"
             name="exampleUsage"
             value={formData.exampleUsage}
             onChange={handleChange}
             margin="normal"
             multiline
-            rows={3}
+            rows={2}
+            disabled={loading}
+            placeholder="Example sentence using this word"
           />
-
           <TextField
             fullWidth
-            label="Explanation (optional)"
+            label="Explanation (Optional)"
             name="explanation"
             value={formData.explanation}
             onChange={handleChange}
             margin="normal"
             multiline
-            rows={3}
-            placeholder="Add a brief explanation or context for this word..."
+            rows={2}
+            disabled={loading}
+            placeholder="Additional explanation or context"
           />
-
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Button
               type="submit"
               variant="contained"
               color="primary"
               fullWidth
+              disabled={loading || !formData.originalWord || !formData.translation || !formData.language}
             >
-              Add Word
+              {loading ? <CircularProgress size={20} /> : 'Add Word'}
             </Button>
             <Button
+              type="button"
               variant="outlined"
-              onClick={() => navigate('/words')}
-              fullWidth
+              onClick={handleReset}
+              disabled={loading}
             >
-              Back to List
+              Reset
             </Button>
           </Box>
         </form>

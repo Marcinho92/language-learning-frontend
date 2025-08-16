@@ -10,6 +10,7 @@ const GrammarPractice = lazy(() => import('./components/GrammarPractice.jsx'));
 const AddWord = lazy(() => import('./components/AddWord.jsx'));
 const EditWord = lazy(() => import('./components/EditWord.jsx'));
 const Practice = lazy(() => import('./components/Practice'));
+const CacheMonitor = lazy(() => import('./components/CacheMonitor.jsx'));
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -64,6 +65,7 @@ function App() {
               <Route path="/practice" element={<Practice />} />
               <Route path="/add" element={<AddWord />} />
               <Route path="/edit/:id" element={<EditWord />} />
+              <Route path="/cache" element={<CacheMonitor />} />
               <Route path="/" element={<WordList />} />
             </Routes>
           </Suspense>

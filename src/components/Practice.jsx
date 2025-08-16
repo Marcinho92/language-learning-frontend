@@ -16,10 +16,11 @@ import {
   CardHeader,
   Grid,
   IconButton,
-  Collapse
+  Collapse,
+  CircularProgress
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Mic as MicIcon, MicOff as MicOffIcon } from '@mui/icons-material';
-import { getCachedData, setCachedData, getCacheKey } from '../utils/apiCache';
+import { getCachedData, setCachedData, getCacheKey, clearCacheByPattern } from '../utils/apiCache';
 
 const LANGUAGES = [
   { value: 'polski', label: 'Polski' },
@@ -60,6 +61,8 @@ const Practice = () => {
   // Stan dla zwijania/rozwijania generatora
   const [isGeneratorExpanded, setIsGeneratorExpanded] = useState(false);
 
+  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -98,33 +101,32 @@ const Practice = () => {
       'français': 'fr-FR',
       'español': 'es-ES'
     };
+
+    const currentLanguage = fieldName === 'sourceText' 
+      ? verifyForm.sourceLanguage 
+      : verifyForm.targetLanguage;
     
-    recognition.lang = fieldName === 'sourceText' 
-      ? languageMap[verifyForm.sourceLanguage] || 'en-US'
-      : languageMap[verifyForm.targetLanguage] || 'en-US';
-    
+    recognition.lang = languageMap[currentLanguage] || 'en-US';
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    recognition.onstart = () => {
-      if (fieldName === 'sourceText') {
-        setIsRecordingSource(true);
-      } else {
-        setIsRecordingTranslation(true);
-      }
-    };
+    if (fieldName === 'sourceText') {
+      setIsRecordingSource(true);
+    } else {
+      setIsRecordingTranslation(true);
+    }
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setVerifyForm(prev => ({
         ...prev,
-        [fieldName]: prev[fieldName] + ' ' + transcript
+        [fieldName]: transcript
       }));
     };
 
     recognition.onerror = (event) => {
-      console.error('Błąd rozpoznawania mowy:', event.error);
-      alert('Błąd rozpoznawania mowy: ' + event.error);
+      console.error('Speech recognition error:', event.error);
+      alert(`Błąd rozpoznawania mowy: ${event.error}`);
     };
 
     recognition.onend = () => {
@@ -137,34 +139,50 @@ const Practice = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
     setExerciseText('');
-    
+    setLoading(true);
+
     try {
-      // Sprawdź cache dla generowanego ćwiczenia
-      const cacheKey = getCacheKey('https://language-learning-backend-production-3ce3.up.railway.app/api/practice/generate', form);
+      // Sprawdź cache dla wygenerowanego tekstu
+      const cacheKey = getCacheKey(`${apiUrl}/api/practice/generate`, {
+        sourceLanguage: form.sourceLanguage,
+        targetLanguage: form.targetLanguage,
+        level: form.level,
+        sentenceCount: form.sentenceCount,
+        topic: form.topic
+      });
+      
       const cachedData = getCachedData(cacheKey);
       
       if (cachedData) {
-        setExerciseText(cachedData.exerciseText);
+        setExerciseText(cachedData.text || cachedData);
         setLoading(false);
         return;
       }
-      
-      const response = await fetch('https://language-learning-backend-production-3ce3.up.railway.app/api/practice/generate', {
+
+      const response = await fetch(`${apiUrl}/api/practice/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
       });
-      if (!response.ok) throw new Error('Błąd generowania ćwiczenia');
-      const data = await response.json();
-      setExerciseText(data.exerciseText);
-      
-      // Zapisz w cache
-      setCachedData(cacheKey, data);
-    } catch (err) {
-      setError(err.message);
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.text || data;
+        setExerciseText(text);
+        
+        // Zapisz w cache
+        setCachedData(cacheKey, text);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Failed to generate exercise text');
+      }
+    } catch (error) {
+      console.error('Error generating exercise text:', error);
+      setError('Failed to generate exercise text. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -172,20 +190,37 @@ const Practice = () => {
 
   const handleVerifySubmit = async (e) => {
     e.preventDefault();
-    setVerifyLoading(true);
     setVerifyError('');
     setVerifyResult(null);
+    setVerifyLoading(true);
+
     try {
-      const response = await fetch('https://language-learning-backend-production-3ce3.up.railway.app/api/practice/verify', {
+      const response = await fetch(`${apiUrl}/api/practice/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(verifyForm)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sourceLanguage: verifyForm.sourceLanguage,
+          targetLanguage: verifyForm.targetLanguage,
+          sourceText: verifyForm.sourceText,
+          userTranslation: verifyForm.userTranslation
+        }),
       });
-      if (!response.ok) throw new Error('Błąd weryfikacji tłumaczenia');
-      const data = await response.json();
-      setVerifyResult(data);
-    } catch (err) {
-      setVerifyError(err.message);
+
+      if (response.ok) {
+        const data = await response.json();
+        setVerifyResult(data);
+        
+        // Wyczyść cache dla weryfikacji aby zawsze mieć aktualne wyniki
+        clearCacheByPattern('/api/practice/verify');
+      } else {
+        const errorData = await response.json();
+        setVerifyError(errorData.message || 'Failed to verify translation');
+      }
+    } catch (error) {
+      console.error('Error verifying translation:', error);
+      setVerifyError('Failed to verify translation. Please check your connection and try again.');
     } finally {
       setVerifyLoading(false);
     }
@@ -260,8 +295,8 @@ const Practice = () => {
                       labelId="level-label"
                       aria-label="Select proficiency level"
                     >
-                      {LEVELS.map(lang => (
-                        <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
+                      {LEVELS.map(level => (
+                        <MenuItem key={level} value={level}>{level}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -300,7 +335,7 @@ const Practice = () => {
                       disabled={loading}
                       sx={{ px: 4 }}
                     >
-                      {loading ? 'Generowanie...' : 'Generuj tekst'}
+                      {loading ? <CircularProgress size={20} /> : 'Generuj tekst'}
                     </Button>
                   </Box>
                 </Grid>
@@ -327,7 +362,6 @@ const Practice = () => {
         </Collapse>
       </Card>
 
-      {/* Weryfikacja tłumaczeń */}
       <Card sx={{ mt: 5 }}>
         <CardContent>
           <Typography variant="h5" sx={{ mb: 3 }}>Weryfikacja tłumaczeń</Typography>
@@ -433,7 +467,7 @@ const Practice = () => {
                     disabled={verifyLoading}
                     sx={{ px: 4 }}
                   >
-                    {verifyLoading ? 'Sprawdzanie...' : 'Sprawdź tłumaczenie'}
+                    {verifyLoading ? <CircularProgress size={20} /> : 'Sprawdź tłumaczenie'}
                   </Button>
                 </Box>
               </Grid>

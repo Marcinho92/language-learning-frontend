@@ -12,9 +12,10 @@ import {
   Select,
   MenuItem,
   Alert,
-  Rating
+  Rating,
+  CircularProgress
 } from '@mui/material';
-import { getCachedData, setCachedData, getCacheKey, clearCache } from '../utils/apiCache';
+import { getCachedData, setCachedData, getCacheKey, clearCache, clearCacheByPattern } from '../utils/apiCache';
 
 const EditWord = () => {
   const { id } = useParams();
@@ -31,6 +32,7 @@ const EditWord = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
 
@@ -40,6 +42,7 @@ const EditWord = () => {
 
   const fetchWord = async () => {
     try {
+      setLoading(true);
       // Sprawdź cache dla konkretnego słowa
       const cacheKey = getCacheKey(`${apiUrl}/api/words/${id}`);
       const cachedData = getCachedData(cacheKey);
@@ -73,11 +76,12 @@ const EditWord = () => {
         // Zapisz w cache
         setCachedData(cacheKey, data);
       } else {
-        setError('Word not found');
+        const errorData = await response.json();
+        setError(errorData.message || 'Word not found');
       }
     } catch (error) {
       console.error('Error fetching word:', error);
-      setError('Failed to fetch word');
+      setError('Failed to fetch word. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -95,6 +99,7 @@ const EditWord = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
+    setSaving(true);
 
     try {
       const response = await fetch(`${apiUrl}/api/words/${id}`, {
@@ -106,19 +111,28 @@ const EditWord = () => {
       });
 
       if (response.ok) {
+        const updatedWord = await response.json();
+        setWord(updatedWord);
         setSuccess('Word updated successfully!');
-        // Wyczyść cache po edycji słowa
+        
+        // Wyczyść cache po aktualizacji
         clearCache();
+        // Dodatkowo wyczyść cache dla konkretnych endpointów
+        clearCacheByPattern('/api/words');
+        
+        // Przekieruj do listy słów po 2 sekundach
         setTimeout(() => {
           navigate('/words');
-        }, 1500);
+        }, 2000);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to update word');
       }
     } catch (error) {
       console.error('Error updating word:', error);
-      setError('Failed to update word');
+      setError('Failed to update word. Please check your connection and try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -128,31 +142,36 @@ const EditWord = () => {
     }
 
     try {
+      setSaving(true);
       const response = await fetch(`${apiUrl}/api/words/${id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        setSuccess('Word deleted successfully!');
-        setTimeout(() => {
-          navigate('/words');
-        }, 1500);
+        // Wyczyść cache po usunięciu
+        clearCache();
+        clearCacheByPattern('/api/words');
+        
+        // Przekieruj do listy słów
+        navigate('/words');
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to delete word');
       }
     } catch (error) {
       console.error('Error deleting word:', error);
-      setError('Failed to delete word');
+      setError('Failed to delete word. Please check your connection and try again.');
+    } finally {
+      setSaving(false);
     }
   };
 
   if (loading) {
     return (
       <Container maxWidth="sm">
-        <Typography variant="h6" align="center">
-          Loading...
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <CircularProgress size={40} />
+        </Box>
       </Container>
     );
   }
@@ -160,10 +179,14 @@ const EditWord = () => {
   if (error && !word) {
     return (
       <Container maxWidth="sm">
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mt: 2 }}>
           {error}
         </Alert>
-        <Button variant="outlined" onClick={() => navigate('/words')}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/words')}
+          sx={{ mt: 2 }}
+        >
           Back to List
         </Button>
       </Container>
@@ -188,114 +211,125 @@ const EditWord = () => {
         </Alert>
       )}
 
-      <Paper sx={{ p: 3 }}>
-        <form onSubmit={handleSubmit}>
-          <TextField
-            fullWidth
-            label="Original Word"
-            name="originalWord"
-            value={formData.originalWord}
-            onChange={handleChange}
-            margin="normal"
-            required
-          />
-
-          <TextField
-            fullWidth
-            label="Translation"
-            name="translation"
-            value={formData.translation}
-            onChange={handleChange}
-            margin="normal"
-            required
-          />
-
-          <FormControl fullWidth margin="normal" required>
-            <InputLabel id="edit-language-label">Language</InputLabel>
-            <Select
-              name="language"
-              value={formData.language}
+      {word && (
+        <Paper sx={{ p: 3 }}>
+          <form onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Original Word"
+              name="originalWord"
+              value={formData.originalWord}
               onChange={handleChange}
-              label="Language"
-              labelId="edit-language-label"
-              aria-label="Select language for editing"
-            >
-              <MenuItem value="english">English</MenuItem>
-              <MenuItem value="polish">Polish</MenuItem>
-              <MenuItem value="spanish">Spanish</MenuItem>
-              <MenuItem value="german">German</MenuItem>
-            </Select>
-          </FormControl>
-
-          <TextField
-            fullWidth
-            label="Example Usage (optional)"
-            name="exampleUsage"
-            value={formData.exampleUsage}
-            onChange={handleChange}
-            margin="normal"
-            multiline
-            rows={3}
-          />
-
-          <TextField
-            fullWidth
-            label="Explanation (optional)"
-            name="explanation"
-            value={formData.explanation}
-            onChange={handleChange}
-            margin="normal"
-            multiline
-            rows={3}
-            placeholder="Add a brief explanation or context for this word..."
-          />
-
-          <Box sx={{ mt: 2 }}>
-            <Typography component="legend">Proficiency Level</Typography>
-            <Rating
-              name="proficiencyLevel"
-              value={parseInt(formData.proficiencyLevel)}
-              onChange={(event, newValue) => {
-                setFormData(prev => ({
-                  ...prev,
-                  proficiencyLevel: newValue
-                }));
-              }}
-              max={5}
-              aria-label={`Set proficiency level to ${parseInt(formData.proficiencyLevel)} out of 5`}
+              margin="normal"
+              required
+              disabled={saving}
+              placeholder="Enter the word in original language"
             />
-          </Box>
-
-          <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
+            <TextField
               fullWidth
-            >
-              Update Word
-            </Button>
-            <Button
-              variant="outlined"
-              onClick={() => navigate('/words')}
+              label="Translation"
+              name="translation"
+              value={formData.translation}
+              onChange={handleChange}
+              margin="normal"
+              required
+              disabled={saving}
+              placeholder="Enter the translation"
+            />
+            <FormControl fullWidth margin="normal" required>
+              <InputLabel id="language-label">Language</InputLabel>
+              <Select
+                name="language"
+                value={formData.language}
+                onChange={handleChange}
+                label="Language"
+                labelId="language-label"
+                disabled={saving}
+              >
+                <MenuItem value="english">English</MenuItem>
+                <MenuItem value="polish">Polish</MenuItem>
+                <MenuItem value="spanish">Spanish</MenuItem>
+                <MenuItem value="german">German</MenuItem>
+              </Select>
+            </FormControl>
+            <Box sx={{ mt: 2, mb: 2 }}>
+              <Typography component="legend" gutterBottom>
+                Proficiency Level
+              </Typography>
+              <Rating
+                name="proficiencyLevel"
+                value={formData.proficiencyLevel}
+                onChange={(event, newValue) => {
+                  handleChange({
+                    target: { name: 'proficiencyLevel', value: newValue }
+                  });
+                }}
+                max={5}
+                disabled={saving}
+                aria-label="Set proficiency level"
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Current level: {formData.proficiencyLevel}/5
+              </Typography>
+            </Box>
+            <TextField
               fullWidth
-            >
-              Cancel
-            </Button>
-          </Box>
-
-          <Box sx={{ mt: 2 }}>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleDelete}
+              label="Example Usage (Optional)"
+              name="exampleUsage"
+              value={formData.exampleUsage}
+              onChange={handleChange}
+              margin="normal"
+              multiline
+              rows={2}
+              disabled={saving}
+              placeholder="Example sentence using this word"
+            />
+            <TextField
               fullWidth
-            >
-              Delete Word
-            </Button>
-          </Box>
-        </form>
-      </Paper>
+              label="Explanation (Optional)"
+              name="explanation"
+              value={formData.explanation}
+              onChange={handleChange}
+              margin="normal"
+              multiline
+              rows={2}
+              disabled={saving}
+              placeholder="Additional explanation or context"
+            />
+            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={saving || !formData.originalWord || !formData.translation || !formData.language}
+              >
+                {saving ? <CircularProgress size={20} /> : 'Update Word'}
+              </Button>
+              <Button
+                type="button"
+                variant="outlined"
+                color="error"
+                onClick={handleDelete}
+                disabled={saving}
+              >
+                Delete Word
+              </Button>
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              <Button
+                type="button"
+                variant="text"
+                onClick={() => navigate('/words')}
+                disabled={saving}
+                fullWidth
+              >
+                Cancel
+              </Button>
+            </Box>
+          </form>
+        </Paper>
+      )}
     </Container>
   );
 };

@@ -69,6 +69,14 @@ const Navigation = () => {
           >
             Practice
           </Button>
+          <Button
+            component={Link}
+            to="/cache"
+            color="inherit"
+            variant={isActive('/cache') ? 'contained' : 'text'}
+          >
+            Cache
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>

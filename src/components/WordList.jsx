@@ -30,7 +30,8 @@ import {
   CardContent,
   Collapse,
   Grid,
-  Divider
+  Divider,
+  CircularProgress
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -38,7 +39,8 @@ import {
   GetApp as DownloadIcon, 
   Publish as UploadIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon
+  ExpandLess as ExpandLessIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { getCachedData, setCachedData, getCacheKey, clearCache } from '../utils/apiCache';
 
@@ -51,13 +53,16 @@ const WordList = () => {
     search: ''
   });
   const [sortConfig, setSortConfig] = useState({
-    key: null,
+    key: 'id',
     direction: 'asc'
   });
   const [selectedWords, setSelectedWords] = useState([]);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(20);
   const [expandedWords, setExpandedWords] = useState(new Set());
+  const [totalElements, setTotalElements] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -65,29 +70,74 @@ const WordList = () => {
   const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
 
   useEffect(() => {
-    fetchWords();
-  }, []);
+    fetchWordsPaginated();
+  }, [page, rowsPerPage, sortConfig, filters]);
 
-  const fetchWords = async () => {
+  // Funkcja do pobierania słów z nowego endpointu paginacji
+  const fetchWordsPaginated = async () => {
     try {
       setError('');
+      setLoading(true);
       
-      // Sprawdź cache
-      const cacheKey = getCacheKey(`${apiUrl}/api/words`);
+      // Parametry dla nowego API
+      const params = new URLSearchParams({
+        page: page.toString(),
+        size: rowsPerPage.toString(),
+        sortBy: sortConfig.key || 'id',
+        sortDir: sortConfig.direction || 'asc'
+      });
+
+      // Dodaj filtry językowe jeśli są ustawione
+      if (filters.language) {
+        params.append('language', filters.language);
+      }
+
+      // Dodaj wyszukiwanie jeśli jest ustawione
+      if (filters.search) {
+        params.append('search', filters.search);
+      }
+
+      const apiEndpoint = `${apiUrl}/api/words/paginated?${params.toString()}`;
+      
+      // Sprawdź cache z kluczem zawierającym parametry
+      const cacheKey = getCacheKey(apiEndpoint, {
+        page,
+        size: rowsPerPage,
+        sortBy: sortConfig.key,
+        sortDir: sortConfig.direction,
+        language: filters.language,
+        search: filters.search
+      });
+      
       const cachedData = getCachedData(cacheKey);
       
-      if (cachedData) {
-        setWords(cachedData);
+      if (cachedData && !isRefreshing) {
+        setWords(cachedData.content || cachedData);
+        setTotalElements(cachedData.totalElements || cachedData.length);
+        setTotalPages(cachedData.totalPages || Math.ceil((cachedData.totalElements || cachedData.length) / rowsPerPage));
         setLoading(false);
         return;
       }
       
-      const response = await fetch(`${apiUrl}/api/words`);
+      const response = await fetch(apiEndpoint);
       
       if (response.ok) {
         const data = await response.json();
-        setWords(data);
-        // Zapisz w cache
+        
+        // Obsługa nowej struktury odpowiedzi z paginacją
+        if (data.content) {
+          // Nowy format z paginacją
+          setWords(data.content);
+          setTotalElements(data.totalElements);
+          setTotalPages(data.totalPages);
+        } else {
+          // Fallback dla starego formatu
+          setWords(data);
+          setTotalElements(data.length);
+          setTotalPages(Math.ceil(data.length / rowsPerPage));
+        }
+        
+        // Zapisz w cache z nowym kluczem
         setCachedData(cacheKey, data);
       } else {
         const errorData = await response.json();
@@ -98,6 +148,39 @@ const WordList = () => {
       setError('Failed to fetch words');
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Funkcja do odświeżania danych (ignoruje cache)
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    clearCache(); // Wyczyść cache aby wymusić nowe pobranie
+    fetchWordsPaginated();
+  };
+
+  // Funkcja do pobierania wszystkich słów (dla eksportu CSV)
+  const fetchAllWords = async () => {
+    try {
+      const cacheKey = getCacheKey(`${apiUrl}/api/words`);
+      const cachedData = getCachedData(cacheKey);
+      
+      if (cachedData) {
+        return cachedData;
+      }
+      
+      const response = await fetch(`${apiUrl}/api/words`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCachedData(cacheKey, data);
+        return data;
+      } else {
+        throw new Error('Failed to fetch all words');
+      }
+    } catch (error) {
+      console.error('Error fetching all words:', error);
+      throw error;
     }
   };
 
@@ -167,7 +250,7 @@ const WordList = () => {
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      const currentPageWordIds = paginatedWords.map(word => word.id);
+      const currentPageWordIds = displayWords.map(word => word.id);
       setSelectedWords(currentPageWordIds);
     } else {
       setSelectedWords([]);
@@ -197,6 +280,7 @@ const WordList = () => {
       ...prev,
       [name]: value
     }));
+    setPage(0); // Reset to first page when filters change
   };
 
   const handleToggleExpand = (wordId) => {
@@ -211,6 +295,16 @@ const WordList = () => {
     });
   };
 
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+    setPage(0); // Reset to first page when sorting changes
+  };
+
+  // Filtrowanie i sortowanie po stronie klienta (dla małych zbiorów danych)
   const filteredWords = words.filter(word => {
     const matchesLanguage = !filters.language || word.language === filters.language;
     const matchesSearch = !filters.search || 
@@ -220,14 +314,7 @@ const WordList = () => {
     return matchesLanguage && matchesSearch;
   });
 
-  const handleSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
+  // Sortowanie po stronie klienta (dla małych zbiorów danych)
   const sortedWords = [...filteredWords].sort((a, b) => {
     if (!sortConfig.key) return 0;
     
@@ -251,10 +338,8 @@ const WordList = () => {
     return 0;
   });
 
-  // Pagination
-  const paginatedWords = rowsPerPage === -1 
-    ? sortedWords 
-    : sortedWords.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // Pagination - używamy words zamiast paginatedWords, bo paginacja jest po stronie serwera
+  const displayWords = rowsPerPage === -1 ? sortedWords : words;
 
   const getLanguageLabel = (language) => {
     const labels = {
@@ -297,29 +382,37 @@ const WordList = () => {
     return fields;
   };
 
-  const exportToCSV = () => {
-    const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage', 'Explanation'];
-    const csvContent = [
-      headers.join(','),
-      ...sortedWords.map(word => [
-        `"${word.originalWord}"`,
-        `"${word.translation}"`,
-        `"${getLanguageLabel(word.language)}"`,
-        word.proficiencyLevel,
-        `"${word.exampleUsage || ''}"`,
-        `"${word.explanation || ''}"`
-      ].join(','))
-    ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'words.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  const exportToCSV = async () => {
+    try {
+      // Pobierz wszystkie słowa dla eksportu (ignoruje paginację)
+      const allWords = await fetchAllWords();
+      
+      const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage', 'Explanation'];
+      const csvContent = [
+        headers.join(','),
+        ...allWords.map(word => [
+          `"${word.originalWord}"`,
+          `"${word.translation}"`,
+          `"${getLanguageLabel(word.language)}"`,
+          word.proficiencyLevel,
+          `"${word.exampleUsage || ''}"`,
+          `"${word.explanation || ''}"`
+        ].join(','))
+      ].join('\n');
+      
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'words.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Export failed: ' + error.message);
+    }
   };
 
   const importFromCSV = (event) => {
@@ -358,7 +451,7 @@ const WordList = () => {
           const result = await response.json();
           // Wyczyść cache po imporcie
           clearCache();
-          fetchWords(); // Refresh the list
+          fetchWordsPaginated(); // Refresh the list
           alert(`Import completed successfully! ${result.importedCount} words imported.`);
         } else {
           const errorData = await response.json();
@@ -469,7 +562,7 @@ const WordList = () => {
     );
   };
 
-  if (loading) {
+  if (loading && !isRefreshing) {
     return (
       <Container maxWidth="lg">
         <Typography variant="h6" align="center">
@@ -526,6 +619,14 @@ const WordList = () => {
           >
             Add New Word
           </Button>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={handleRefresh}
+            disabled={loading || isRefreshing}
+          >
+            {loading || isRefreshing ? <CircularProgress size={20} /> : 'Refresh'}
+          </Button>
         </Box>
       </Box>
 
@@ -565,7 +666,7 @@ const WordList = () => {
         </Box>
 
         <Typography variant="body2" color="text.secondary">
-          Showing {sortedWords.length} of {words.length} words
+          Showing {sortedWords.length} of {totalElements} words
           {selectedWords.length > 0 && ` • ${selectedWords.length} selected`}
         </Typography>
       </Paper>
@@ -576,9 +677,9 @@ const WordList = () => {
             No words found
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            {words.length === 0 ? 'Add your first word to get started!' : 'Try adjusting your search filters.'}
+            {totalElements === 0 ? 'Add your first word to get started!' : 'Try adjusting your search filters.'}
           </Typography>
-          {words.length === 0 && (
+          {totalElements === 0 && (
             <Button
               component={Link}
               to="/add"
@@ -592,11 +693,11 @@ const WordList = () => {
       ) : isMobile ? (
         // Mobile view - cards layout
         <Box>
-          {paginatedWords.map(renderMobileWordCard)}
+          {displayWords.map(renderMobileWordCard)}
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100, { label: 'All', value: -1 }]}
             component="div"
-            count={sortedWords.length}
+            count={totalElements}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}
@@ -613,8 +714,8 @@ const WordList = () => {
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    indeterminate={selectedWords.length > 0 && selectedWords.length < paginatedWords.length}
-                    checked={paginatedWords.length > 0 && selectedWords.length === paginatedWords.length}
+                    indeterminate={selectedWords.length > 0 && selectedWords.length < displayWords.length}
+                    checked={displayWords.length > 0 && selectedWords.length === displayWords.length}
                     onChange={handleSelectAll}
                     aria-label="Select all words on current page"
                   />
@@ -644,7 +745,7 @@ const WordList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {paginatedWords.map((word) => (
+              {displayWords.map((word) => (
                 <TableRow key={word.id}>
                   <TableCell padding="checkbox">
                     <Checkbox
@@ -721,7 +822,7 @@ const WordList = () => {
           <TablePagination
             rowsPerPageOptions={[10, 25, 50, 100, { label: 'All', value: -1 }]}
             component="div"
-            count={sortedWords.length}
+            count={totalElements}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}

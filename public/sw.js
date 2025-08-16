@@ -15,6 +15,7 @@ const STATIC_FILES = [
   '/src/components/WordLearning.jsx',
   '/src/components/Practice.jsx',
   '/src/components/GrammarPractice.jsx',
+  '/src/components/CacheMonitor.jsx',
   '/src/utils/apiCache.js'
 ];
 
