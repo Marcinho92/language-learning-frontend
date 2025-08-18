@@ -34,8 +34,5 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
     exclude: ['@mui/material', '@mui/icons-material']
-  },
-  esbuild: {
-    jsxInject: `import React from 'react'`
   }
 }) 
