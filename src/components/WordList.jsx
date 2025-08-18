@@ -79,6 +79,16 @@ const WordList = () => {
       setError('');
       setLoading(true);
       
+      // Jeśli rowsPerPage === -1, pobierz wszystkie słowa bez paginacji
+      if (rowsPerPage === -1) {
+        const allWords = await fetchAllWords();
+        setWords(allWords);
+        setTotalElements(allWords.length);
+        setTotalPages(1);
+        setLoading(false);
+        return;
+      }
+      
       // Parametry dla nowego API
       const params = new URLSearchParams({
         page: page.toString(),
@@ -250,7 +260,7 @@ const WordList = () => {
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      const currentPageWordIds = displayWords.map(word => word.id);
+      const currentPageWordIds = rowsPerPage === -1 ? words.map(word => word.id) : displayWords.map(word => word.id);
       setSelectedWords(currentPageWordIds);
     } else {
       setSelectedWords([]);
@@ -339,7 +349,7 @@ const WordList = () => {
   });
 
   // Pagination - używamy words zamiast paginatedWords, bo paginacja jest po stronie serwera
-  const displayWords = rowsPerPage === -1 ? sortedWords : words;
+  const displayWords = rowsPerPage === -1 ? words : words;
 
   const getLanguageLabel = (language) => {
     const labels = {
@@ -663,10 +673,28 @@ const WordList = () => {
               <MenuItem value="german">German</MenuItem>
             </Select>
           </FormControl>
+          <Button
+            variant={rowsPerPage === -1 ? "contained" : "outlined"}
+            size="small"
+            onClick={() => {
+              if (rowsPerPage === -1) {
+                setRowsPerPage(20);
+                setPage(0);
+              } else {
+                setRowsPerPage(-1);
+                setPage(0);
+              }
+            }}
+          >
+            {rowsPerPage === -1 ? "Show Paginated" : "Show All"}
+          </Button>
         </Box>
 
         <Typography variant="body2" color="text.secondary">
-          Showing {sortedWords.length} of {totalElements} words
+          {rowsPerPage === -1 
+            ? `Showing all ${totalElements} words`
+            : `Showing ${words.length} of ${totalElements} words`
+          }
           {selectedWords.length > 0 && ` • ${selectedWords.length} selected`}
         </Typography>
       </Paper>
@@ -694,17 +722,19 @@ const WordList = () => {
         // Mobile view - cards layout
         <Box>
           {displayWords.map(renderMobileWordCard)}
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50, 100, { label: 'All', value: -1 }]}
-            component="div"
-            count={totalElements}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Words per page:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`}
-          />
+          {rowsPerPage !== -1 && (
+            <TablePagination
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              component="div"
+              count={totalElements}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Words per page:"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`}
+            />
+          )}
         </Box>
       ) : (
         // Desktop view - table layout
@@ -714,8 +744,8 @@ const WordList = () => {
               <TableRow>
                 <TableCell padding="checkbox">
                   <Checkbox
-                    indeterminate={selectedWords.length > 0 && selectedWords.length < displayWords.length}
-                    checked={displayWords.length > 0 && selectedWords.length === displayWords.length}
+                    indeterminate={selectedWords.length > 0 && selectedWords.length < (rowsPerPage === -1 ? words.length : displayWords.length)}
+                    checked={(rowsPerPage === -1 ? words.length : displayWords.length) > 0 && selectedWords.length === (rowsPerPage === -1 ? words.length : displayWords.length)}
                     onChange={handleSelectAll}
                     aria-label="Select all words on current page"
                   />
@@ -819,17 +849,19 @@ const WordList = () => {
               ))}
             </TableBody>
           </Table>
-          <TablePagination
-            rowsPerPageOptions={[10, 25, 50, 100, { label: 'All', value: -1 }]}
-            component="div"
-            count={totalElements}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="Words per page:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`}
-          />
+          {rowsPerPage !== -1 && (
+            <TablePagination
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              component="div"
+              count={totalElements}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              labelRowsPerPage="Words per page:"
+              labelDisplayedRows={({ from, to, count }) => `${from}-${to} of ${count !== -1 ? count : `more than ${to}`}`}
+            />
+          )}
         </TableContainer>
       )}
     </Container>

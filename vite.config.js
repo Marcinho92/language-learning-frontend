@@ -16,15 +16,26 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
     rollupOptions: {
-      input: 'index.html'
+      input: 'index.html',
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          mui: ['@mui/material', '@mui/icons-material'],
+          router: ['react-router-dom']
+        }
+      }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
+    target: 'es2015'
   },
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
   },
-  ssr: {
-    target: 'node',
-    format: 'cjs'
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom'],
+    exclude: ['@mui/material', '@mui/icons-material']
+  },
+  esbuild: {
+    jsxInject: `import React from 'react'`
   }
 }) 
