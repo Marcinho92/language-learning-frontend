@@ -205,13 +205,23 @@ const WordList = () => {
       });
 
       if (response.ok) {
-        setWords(words.filter(word => word.id !== id));
+        const updatedWords = words.filter(word => word.id !== id);
+        setWords(updatedWords);
         setSelectedWords(selectedWords.filter(wordId => wordId !== id));
         setExpandedWords(prev => {
           const newSet = new Set(prev);
           newSet.delete(id);
           return newSet;
         });
+        
+        // Sprawdź czy po usunięciu słowa strona jest pusta i czy istnieją poprzednie strony
+        if (updatedWords.length === 0 && page > 0) {
+          setPage(page - 1);
+        } else {
+          // Aktualizuj totalElements po usunięciu słowa
+          setTotalElements(prev => Math.max(0, prev - 1));
+        }
+        
         // Wyczyść cache po usunięciu słowa
         clearCache();
       } else {
@@ -242,9 +252,19 @@ const WordList = () => {
 
       if (response.ok) {
         const result = await response.json();
-        setWords(words.filter(word => !selectedWords.includes(word.id)));
+        const updatedWords = words.filter(word => !selectedWords.includes(word.id));
+        setWords(updatedWords);
         setSelectedWords([]);
         setExpandedWords(new Set());
+        
+        // Sprawdź czy po usunięciu słów strona jest pusta i czy istnieją poprzednie strony
+        if (updatedWords.length === 0 && page > 0) {
+          setPage(page - 1);
+        } else {
+          // Aktualizuj totalElements po usunięciu słów
+          setTotalElements(prev => Math.max(0, prev - selectedWords.length));
+        }
+        
         // Wyczyść cache po bulk delete
         clearCache();
         alert(`Successfully deleted ${result.deletedCount} words!`);
