@@ -214,9 +214,11 @@ const WordList = () => {
           return newSet;
         });
         
-        // Sprawdź czy po usunięciu słowa strona jest pusta i czy istnieją poprzednie strony
-        if (updatedWords.length === 0 && page > 0) {
-          setPage(page - 1);
+        // Sprawdź czy po usunięciu słowa strona jest pusta i czy istnieją następne strony
+        if (updatedWords.length === 0 && page < totalPages - 1) {
+          setPage(page + 1);  // Przejdź do następnej strony
+        } else if (updatedWords.length === 0 && page > 0) {
+          setPage(page - 1);  // Jeśli nie ma następnej strony, wróć do poprzedniej
         } else {
           // Aktualizuj totalElements po usunięciu słowa
           setTotalElements(prev => Math.max(0, prev - 1));
@@ -257,9 +259,11 @@ const WordList = () => {
         setSelectedWords([]);
         setExpandedWords(new Set());
         
-        // Sprawdź czy po usunięciu słów strona jest pusta i czy istnieją poprzednie strony
-        if (updatedWords.length === 0 && page > 0) {
-          setPage(page - 1);
+        // Sprawdź czy po usunięciu słów strona jest pusta i czy istnieją następne strony
+        if (updatedWords.length === 0 && page < totalPages - 1) {
+          setPage(page + 1);  // Przejdź do następnej strony
+        } else if (updatedWords.length === 0 && page > 0) {
+          setPage(page - 1);  // Jeśli nie ma następnej strony, wróć do poprzedniej
         } else {
           // Aktualizuj totalElements po usunięciu słów
           setTotalElements(prev => Math.max(0, prev - selectedWords.length));
