@@ -724,7 +724,7 @@ const WordList = () => {
           {displayWords.map(renderMobileWordCard)}
           {rowsPerPage !== -1 && (
             <TablePagination
-              rowsPerPageOptions={[10, 25, 50, 100]}
+              rowsPerPageOptions={[10, 25, 50, 100, 1000, 5000]}
               component="div"
               count={totalElements}
               rowsPerPage={rowsPerPage}
@@ -851,7 +851,7 @@ const WordList = () => {
           </Table>
           {rowsPerPage !== -1 && (
             <TablePagination
-              rowsPerPageOptions={[10, 25, 50, 100]}
+              rowsPerPageOptions={[10, 25, 50, 100, 1000, 5000]}
               component="div"
               count={totalElements}
               rowsPerPage={rowsPerPage}
