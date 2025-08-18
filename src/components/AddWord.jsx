@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
-  TextField,
   Button,
   Paper,
   Box,
@@ -10,11 +10,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  TextField,
+  Rating,
   Alert,
   CircularProgress
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { clearCache, clearCacheByPattern } from '../utils/apiCache';
 
 const AddWord = () => {
   const [formData, setFormData] = useState({
@@ -56,11 +56,6 @@ const AddWord = () => {
 
       if (response.ok) {
         setSuccess('Word added successfully!');
-        
-        // Wyczyść cache po dodaniu nowego słowa
-        clearCache();
-        // Dodatkowo wyczyść cache dla konkretnych endpointów
-        clearCacheByPattern('/api/words');
         
         setFormData({
           originalWord: '',

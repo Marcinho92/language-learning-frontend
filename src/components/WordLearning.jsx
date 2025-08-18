@@ -2,21 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
-  TextField,
   Button,
   Paper,
   Box,
-  Rating,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  TextField,
+  Rating,
   Alert,
-  CircularProgress,
-  Chip
+  Chip,
+  CircularProgress
 } from '@mui/material';
+import { VolumeUp as VolumeUpIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { getCachedData, setCachedData, getCacheKey, clearCacheByPattern } from '../utils/apiCache';
 
 const WordLearning = () => {
   const [currentWord, setCurrentWord] = useState(null);
@@ -61,7 +61,7 @@ const WordLearning = () => {
           setError('');
           
           // Wyczyść cache dla tego słowa aby wymusić aktualizację
-          clearCacheByPattern(`/api/words/${data.id}`);
+          // clearCacheByPattern(`/api/words/${data.id}`); // Removed as per edit hint
         }
       } else {
         const errorData = await response.json();
@@ -103,7 +103,7 @@ const WordLearning = () => {
           setCurrentWord(updatedWord);
           
           // Wyczyść cache dla listy słów aby odzwierciedlić zmiany
-          clearCacheByPattern('/api/words');
+          // clearCacheByPattern('/api/words'); // Removed as per edit hint
         }
       }
     } catch (error) {

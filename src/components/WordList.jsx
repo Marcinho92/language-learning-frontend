@@ -42,7 +42,6 @@ import {
   ExpandLess as ExpandLessIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
-import { getCachedData, setCachedData, getCacheKey, clearCache } from '../utils/apiCache';
 
 const WordList = () => {
   const [words, setWords] = useState([]);
@@ -109,26 +108,6 @@ const WordList = () => {
 
       const apiEndpoint = `${apiUrl}/api/words/paginated?${params.toString()}`;
       
-      // Sprawdź cache z kluczem zawierającym parametry
-      const cacheKey = getCacheKey(apiEndpoint, {
-        page,
-        size: rowsPerPage,
-        sortBy: sortConfig.key,
-        sortDir: sortConfig.direction,
-        language: filters.language,
-        search: filters.search
-      });
-      
-      const cachedData = getCachedData(cacheKey);
-      
-      if (cachedData && !isRefreshing) {
-        setWords(cachedData.content || cachedData);
-        setTotalElements(cachedData.totalElements || cachedData.length);
-        setTotalPages(cachedData.totalPages || Math.ceil((cachedData.totalElements || cachedData.length) / rowsPerPage));
-        setLoading(false);
-        return;
-      }
-      
       const response = await fetch(apiEndpoint);
       
       if (response.ok) {
@@ -146,9 +125,6 @@ const WordList = () => {
           setTotalElements(data.length);
           setTotalPages(Math.ceil(data.length / rowsPerPage));
         }
-        
-        // Zapisz w cache z nowym kluczem
-        setCachedData(cacheKey, data);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to fetch words');
@@ -165,25 +141,16 @@ const WordList = () => {
   // Funkcja do odświeżania danych (ignoruje cache)
   const handleRefresh = () => {
     setIsRefreshing(true);
-    clearCache(); // Wyczyść cache aby wymusić nowe pobranie
     fetchWordsPaginated();
   };
 
   // Funkcja do pobierania wszystkich słów (dla eksportu CSV)
   const fetchAllWords = async () => {
     try {
-      const cacheKey = getCacheKey(`${apiUrl}/api/words`);
-      const cachedData = getCachedData(cacheKey);
-      
-      if (cachedData) {
-        return cachedData;
-      }
-      
       const response = await fetch(`${apiUrl}/api/words`);
       
       if (response.ok) {
         const data = await response.json();
-        setCachedData(cacheKey, data);
         return data;
       } else {
         throw new Error('Failed to fetch all words');
@@ -224,8 +191,6 @@ const WordList = () => {
           setTotalElements(prev => Math.max(0, prev - 1));
         }
         
-        // Wyczyść cache po usunięciu słowa
-        clearCache();
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to delete word');
@@ -269,8 +234,6 @@ const WordList = () => {
           setTotalElements(prev => Math.max(0, prev - selectedWords.length));
         }
         
-        // Wyczyść cache po bulk delete
-        clearCache();
         alert(`Successfully deleted ${result.deletedCount} words!`);
       } else {
         const errorData = await response.json();
@@ -284,7 +247,7 @@ const WordList = () => {
 
   const handleSelectAll = (event) => {
     if (event.target.checked) {
-      const currentPageWordIds = rowsPerPage === -1 ? words.map(word => word.id) : displayWords.map(word => word.id);
+      const currentPageWordIds = rowsPerPage === -1 ? words.map(word => word.id) : words.map(word => word.id);
       setSelectedWords(currentPageWordIds);
     } else {
       setSelectedWords([]);
@@ -483,8 +446,6 @@ const WordList = () => {
         
         if (response.ok) {
           const result = await response.json();
-          // Wyczyść cache po imporcie
-          clearCache();
           fetchWordsPaginated(); // Refresh the list
           alert(`Import completed successfully! ${result.importedCount} words imported.`);
         } else {

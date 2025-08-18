@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -11,16 +11,9 @@ import {
   MenuItem,
   TextField,
   Alert,
-  Card,
-  CardContent,
-  CardHeader,
-  Grid,
-  IconButton,
-  Collapse,
   CircularProgress
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Mic as MicIcon, MicOff as MicOffIcon } from '@mui/icons-material';
-import { getCachedData, setCachedData, getCacheKey, clearCacheByPattern } from '../utils/apiCache';
 
 const LANGUAGES = [
   { value: 'polski', label: 'Polski' },
@@ -144,23 +137,6 @@ const Practice = () => {
     setLoading(true);
 
     try {
-      // Sprawdź cache dla wygenerowanego tekstu
-      const cacheKey = getCacheKey(`${apiUrl}/api/practice/generate`, {
-        sourceLanguage: form.sourceLanguage,
-        targetLanguage: form.targetLanguage,
-        level: form.level,
-        sentenceCount: form.sentenceCount,
-        topic: form.topic
-      });
-      
-      const cachedData = getCachedData(cacheKey);
-      
-      if (cachedData) {
-        setExerciseText(cachedData.text || cachedData);
-        setLoading(false);
-        return;
-      }
-
       const response = await fetch(`${apiUrl}/api/practice/generate`, {
         method: 'POST',
         headers: {
@@ -173,9 +149,6 @@ const Practice = () => {
         const data = await response.json();
         const text = data.text || data;
         setExerciseText(text);
-        
-        // Zapisz w cache
-        setCachedData(cacheKey, text);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to generate exercise text');
@@ -211,9 +184,6 @@ const Practice = () => {
       if (response.ok) {
         const data = await response.json();
         setVerifyResult(data);
-        
-        // Wyczyść cache dla weryfikacji aby zawsze mieć aktualne wyniki
-        clearCacheByPattern('/api/practice/verify');
       } else {
         const errorData = await response.json();
         setVerifyError(errorData.message || 'Failed to verify translation');
@@ -229,10 +199,11 @@ const Practice = () => {
   return (
     <Container maxWidth="md" sx={{ py: 5 }}>
       {/* Generator tekstu ćwiczeniowego - zwijany */}
-      <Card sx={{ mb: 5 }}>
-        <CardHeader
-          title="Generator tekstu ćwiczeniowego"
-          action={
+      <Paper sx={{ mb: 5, p: 3 }}>
+        <Typography variant="h5" sx={{ mb: 3 }}>Generator tekstu ćwiczeniowego</Typography>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6" sx={{ mb: 0 }}>Generuj nowy tekst:</Typography>
             <Button
               variant="outlined"
               size="small"
@@ -241,237 +212,212 @@ const Practice = () => {
             >
               {isGeneratorExpanded ? 'Ukryj' : 'Pokaż'}
             </Button>
-          }
-        />
-        <Collapse in={isGeneratorExpanded}>
-          <CardContent>
-            <Box component="form" onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="source-language-label">Język źródłowy</InputLabel>
-                    <Select
-                      id="sourceLanguage"
-                      name="sourceLanguage"
-                      value={form.sourceLanguage}
-                      onChange={handleChange}
-                      label="Język źródłowy"
-                      labelId="source-language-label"
-                      aria-label="Select source language"
-                    >
-                      {LANGUAGES.map(lang => (
-                        <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="target-language-label">Język docelowy</InputLabel>
-                    <Select
-                      id="targetLanguage"
-                      name="targetLanguage"
-                      value={form.targetLanguage}
-                      onChange={handleChange}
-                      label="Język docelowy"
-                      labelId="target-language-label"
-                      aria-label="Select target language"
-                    >
-                      {LANGUAGES.map(lang => (
-                        <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <FormControl fullWidth required>
-                    <InputLabel id="level-label">Poziom</InputLabel>
-                    <Select
-                      id="level"
-                      name="level"
-                      value={form.level}
-                      onChange={handleChange}
-                      label="Poziom"
-                      labelId="level-label"
-                      aria-label="Select proficiency level"
-                    >
-                      {LEVELS.map(level => (
-                        <MenuItem key={level} value={level}>{level}</MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    id="sentenceCount"
-                    name="sentenceCount"
-                    type="number"
-                    label="Liczba zdań"
-                    value={form.sentenceCount}
-                    onChange={handleChange}
-                    required
-                    inputProps={{ min: 1, max: 20 }}
-                    aria-label="Enter number of sentences"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    id="topic"
-                    name="topic"
-                    label="Temat (opcjonalnie)"
-                    value={form.topic}
-                    onChange={handleChange}
-                    aria-label="Enter optional topic"
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      size="large"
-                      disabled={loading}
-                      sx={{ px: 4 }}
-                    >
-                      {loading ? <CircularProgress size={20} /> : 'Generuj tekst'}
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
+          </Box>
+          <Collapse in={isGeneratorExpanded}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <FormControl fullWidth required>
+                <InputLabel id="source-language-label">Język źródłowy</InputLabel>
+                <Select
+                  id="sourceLanguage"
+                  name="sourceLanguage"
+                  value={form.sourceLanguage}
+                  onChange={handleChange}
+                  label="Język źródłowy"
+                  labelId="source-language-label"
+                  aria-label="Select source language"
+                >
+                  {LANGUAGES.map(lang => (
+                    <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required>
+                <InputLabel id="target-language-label">Język docelowy</InputLabel>
+                <Select
+                  id="targetLanguage"
+                  name="targetLanguage"
+                  value={form.targetLanguage}
+                  onChange={handleChange}
+                  label="Język docelowy"
+                  labelId="target-language-label"
+                  aria-label="Select target language"
+                >
+                  {LANGUAGES.map(lang => (
+                    <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth required>
+                <InputLabel id="level-label">Poziom</InputLabel>
+                <Select
+                  id="level"
+                  name="level"
+                  value={form.level}
+                  onChange={handleChange}
+                  label="Poziom"
+                  labelId="level-label"
+                  aria-label="Select proficiency level"
+                >
+                  {LEVELS.map(level => (
+                    <MenuItem key={level} value={level}>{level}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                id="sentenceCount"
+                name="sentenceCount"
+                type="number"
+                label="Liczba zdań"
+                value={form.sentenceCount}
+                onChange={handleChange}
+                required
+                inputProps={{ min: 1, max: 20 }}
+                aria-label="Enter number of sentences"
+              />
+              <TextField
+                fullWidth
+                id="topic"
+                name="topic"
+                label="Temat (opcjonalnie)"
+                value={form.topic}
+                onChange={handleChange}
+                aria-label="Enter optional topic"
+              />
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  disabled={loading}
+                  sx={{ px: 4 }}
+                >
+                  {loading ? <CircularProgress size={20} /> : 'Generuj tekst'}
+                </Button>
+              </Box>
             </Box>
-            {error && <Alert severity="error" sx={{ mt: 3 }}>{error}</Alert>}
-            {exerciseText && (
-              <Alert severity="success" sx={{ mt: 3, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '1.15rem' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" sx={{ mb: 0 }}>Wygenerowany tekst:</Typography>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    onClick={copyToSourceText}
-                    startIcon={<span>📋</span>}
-                  >
-                    Użyj do tłumaczenia
-                  </Button>
-                </Box>
-                {exerciseText}
-              </Alert>
-            )}
-          </CardContent>
-        </Collapse>
-      </Card>
+          </Collapse>
+          {error && <Alert severity="error" sx={{ mt: 3 }}>{error}</Alert>}
+          {exerciseText && (
+            <Alert severity="success" sx={{ mt: 3, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '1.15rem' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 0 }}>Wygenerowany tekst:</Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={copyToSourceText}
+                  startIcon={<span>📋</span>}
+                >
+                  Użyj do tłumaczenia
+                </Button>
+              </Box>
+              {exerciseText}
+            </Alert>
+          )}
+        </Box>
+      </Paper>
 
-      <Card sx={{ mt: 5 }}>
-        <CardContent>
-          <Typography variant="h5" sx={{ mb: 3 }}>Weryfikacja tłumaczeń</Typography>
-          <Box component="form" onSubmit={handleVerifySubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel id="verify-source-language-label">Język źródłowy</InputLabel>
-                  <Select
-                    id="verifySourceLanguage"
-                    name="sourceLanguage"
-                    value={verifyForm.sourceLanguage}
-                    onChange={handleVerifyChange}
-                    label="Język źródłowy"
-                    labelId="verify-source-language-label"
-                    aria-label="Select source language for verification"
+      <Paper sx={{ mt: 5, p: 3 }}>
+        <Typography variant="h5" sx={{ mb: 3 }}>Weryfikacja tłumaczeń</Typography>
+        <Box component="form" onSubmit={handleVerifySubmit}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+            <Typography variant="h6" sx={{ mb: 0 }}>Sprawdź swoje tłumaczenie:</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <FormControl fullWidth required>
+              <InputLabel id="verify-source-language-label">Język źródłowy</InputLabel>
+              <Select
+                id="verifySourceLanguage"
+                name="sourceLanguage"
+                value={verifyForm.sourceLanguage}
+                onChange={handleVerifyChange}
+                label="Język źródłowy"
+                labelId="verify-source-language-label"
+                aria-label="Select source language for verification"
+              >
+                {LANGUAGES.map(lang => (
+                  <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth required>
+              <InputLabel id="verify-target-language-label">Język docelowy</InputLabel>
+              <Select
+                id="verifyTargetLanguage"
+                name="targetLanguage"
+                value={verifyForm.targetLanguage}
+                onChange={handleVerifyChange}
+                label="Język docelowy"
+                labelId="verify-target-language-label"
+                aria-label="Select target language for verification"
+              >
+                {LANGUAGES.map(lang => (
+                  <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              id="sourceText"
+              name="sourceText"
+              label="Tekst do przetłumaczenia"
+              value={verifyForm.sourceText}
+              onChange={handleVerifyChange}
+              multiline
+              rows={3}
+              placeholder="Wpisz tekst do przetłumaczenia lub użyj mikrofonu..."
+              required
+              aria-label="Enter text to translate"
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={() => startSpeechRecognition('sourceText')}
+                    disabled={isRecordingSource}
+                    color={isRecordingSource ? 'error' : 'default'}
+                    aria-label={isRecordingSource ? 'Stop recording' : 'Start voice recording'}
                   >
-                    {LANGUAGES.map(lang => (
-                      <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required>
-                  <InputLabel id="verify-target-language-label">Język docelowy</InputLabel>
-                  <Select
-                    id="verifyTargetLanguage"
-                    name="targetLanguage"
-                    value={verifyForm.targetLanguage}
-                    onChange={handleVerifyChange}
-                    label="Język docelowy"
-                    labelId="verify-target-language-label"
-                    aria-label="Select target language for verification"
+                    {isRecordingSource ? <MicOffIcon /> : <MicIcon />}
+                  </IconButton>
+                )
+              }}
+            />
+            <TextField
+              fullWidth
+              id="userTranslation"
+              name="userTranslation"
+              label="Twoje tłumaczenie"
+              value={verifyForm.userTranslation}
+              onChange={handleVerifyChange}
+              multiline
+              rows={3}
+              placeholder="Wpisz swoje tłumaczenie lub użyj mikrofonu..."
+              required
+              aria-label="Enter your translation"
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={() => startSpeechRecognition('userTranslation')}
+                    disabled={isRecordingTranslation}
+                    color={isRecordingTranslation ? 'error' : 'default'}
+                    aria-label={isRecordingTranslation ? 'Stop recording' : 'Start voice recording'}
                   >
-                    {LANGUAGES.map(lang => (
-                      <MenuItem key={lang.value} value={lang.value}>{lang.label}</MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="sourceText"
-                  name="sourceText"
-                  label="Tekst do przetłumaczenia"
-                  value={verifyForm.sourceText}
-                  onChange={handleVerifyChange}
-                  multiline
-                  rows={3}
-                  placeholder="Wpisz tekst do przetłumaczenia lub użyj mikrofonu..."
-                  required
-                  aria-label="Enter text to translate"
-                  InputProps={{
-                    endAdornment: (
-                      <IconButton
-                        onClick={() => startSpeechRecognition('sourceText')}
-                        disabled={isRecordingSource}
-                        color={isRecordingSource ? 'error' : 'default'}
-                        aria-label={isRecordingSource ? 'Stop recording' : 'Start voice recording'}
-                      >
-                        {isRecordingSource ? <MicOffIcon /> : <MicIcon />}
-                      </IconButton>
-                    )
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  id="userTranslation"
-                  name="userTranslation"
-                  label="Twoje tłumaczenie"
-                  value={verifyForm.userTranslation}
-                  onChange={handleVerifyChange}
-                  multiline
-                  rows={3}
-                  placeholder="Wpisz swoje tłumaczenie lub użyj mikrofonu..."
-                  required
-                  aria-label="Enter your translation"
-                  InputProps={{
-                    endAdornment: (
-                      <IconButton
-                        onClick={() => startSpeechRecognition('userTranslation')}
-                        disabled={isRecordingTranslation}
-                        color={isRecordingTranslation ? 'error' : 'default'}
-                        aria-label={isRecordingTranslation ? 'Stop recording' : 'Start voice recording'}
-                      >
-                        {isRecordingTranslation ? <MicOffIcon /> : <MicIcon />}
-                      </IconButton>
-                    )
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="success"
-                    size="large"
-                    disabled={verifyLoading}
-                    sx={{ px: 4 }}
-                  >
-                    {verifyLoading ? <CircularProgress size={20} /> : 'Sprawdź tłumaczenie'}
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
+                    {isRecordingTranslation ? <MicOffIcon /> : <MicIcon />}
+                  </IconButton>
+                )
+              }}
+            />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button
+                type="submit"
+                variant="contained"
+                color="success"
+                size="large"
+                disabled={verifyLoading}
+                sx={{ px: 4 }}
+              >
+                {verifyLoading ? <CircularProgress size={20} /> : 'Sprawdź tłumaczenie'}
+              </Button>
+            </Box>
           </Box>
           {verifyError && <Alert severity="error" sx={{ mt: 3 }}>{verifyError}</Alert>}
           {verifyResult && (
@@ -494,8 +440,8 @@ const Practice = () => {
               )}
             </Alert>
           )}
-        </CardContent>
-      </Card>
+        </Box>
+      </Paper>
     </Container>
   );
 };

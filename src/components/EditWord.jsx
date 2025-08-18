@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
-  TextField,
   Button,
   Paper,
   Box,
@@ -11,11 +10,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert,
+  TextField,
   Rating,
+  Alert,
   CircularProgress
 } from '@mui/material';
-import { getCachedData, setCachedData, getCacheKey, clearCache, clearCacheByPattern } from '../utils/apiCache';
 
 const EditWord = () => {
   const { id } = useParams();
@@ -43,24 +42,6 @@ const EditWord = () => {
   const fetchWord = async () => {
     try {
       setLoading(true);
-      // Sprawdź cache dla konkretnego słowa
-      const cacheKey = getCacheKey(`${apiUrl}/api/words/${id}`);
-      const cachedData = getCachedData(cacheKey);
-      
-      if (cachedData) {
-        setWord(cachedData);
-        setFormData({
-          originalWord: cachedData.originalWord || '',
-          translation: cachedData.translation || '',
-          language: cachedData.language || '',
-          exampleUsage: cachedData.exampleUsage || '',
-          explanation: cachedData.explanation || '',
-          proficiencyLevel: cachedData.proficiencyLevel || 1
-        });
-        setLoading(false);
-        return;
-      }
-      
       const response = await fetch(`${apiUrl}/api/words/${id}`);
       if (response.ok) {
         const data = await response.json();
@@ -73,8 +54,6 @@ const EditWord = () => {
           explanation: data.explanation || '',
           proficiencyLevel: data.proficiencyLevel || 1
         });
-        // Zapisz w cache
-        setCachedData(cacheKey, data);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Word not found');
@@ -115,11 +94,6 @@ const EditWord = () => {
         setWord(updatedWord);
         setSuccess('Word updated successfully!');
         
-        // Wyczyść cache po aktualizacji
-        clearCache();
-        // Dodatkowo wyczyść cache dla konkretnych endpointów
-        clearCacheByPattern('/api/words');
-        
         // Przekieruj do listy słów po 2 sekundach
         setTimeout(() => {
           navigate('/words');
@@ -148,10 +122,6 @@ const EditWord = () => {
       });
 
       if (response.ok) {
-        // Wyczyść cache po usunięciu
-        clearCache();
-        clearCacheByPattern('/api/words');
-        
         // Przekieruj do listy słów
         navigate('/words');
       } else {
