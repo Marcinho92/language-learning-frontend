@@ -3,7 +3,6 @@ FROM node:18-alpine
 WORKDIR /app
 
 ENV NODE_OPTIONS="--max-old-space-size=512"
-ENV NODE_ENV=production
 
 # Kopiuj package.json i package-lock.json
 COPY package*.json ./
@@ -14,8 +13,11 @@ RUN npm ci
 # Kopiuj wszystkie pliki źródłowe
 COPY . .
 
-# Zbuduj aplikację
+# Zbuduj aplikację (teraz vite jest dostępny)
 RUN npm run build
+
+# Ustaw NODE_ENV na production
+ENV NODE_ENV=production
 
 # Usuń devDependencies po build
 RUN npm prune --production
