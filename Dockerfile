@@ -5,15 +5,23 @@ WORKDIR /app
 ENV NODE_OPTIONS="--max-old-space-size=512"
 ENV NODE_ENV=production
 
+# Kopiuj package.json i package-lock.json
 COPY package*.json ./
-RUN npm install
 
-COPY src/ src/
-COPY index.html ./
-COPY vite.config.js ./
-COPY server.js ./
+# Zainstaluj wszystkie zależności (w tym devDependencies potrzebne do build)
+RUN npm ci
 
+# Kopiuj wszystkie pliki źródłowe
+COPY . .
+
+# Zbuduj aplikację
+RUN npm run build
+
+# Usuń devDependencies po build
+RUN npm prune --production
+
+# Eksponuj port
 EXPOSE $PORT
 
-# Build i uruchom przez Express
-CMD ["sh", "-c", "npm run build && npm start"]
+# Uruchom serwer
+CMD ["npm", "start"]
