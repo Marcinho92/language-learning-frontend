@@ -10,7 +10,5 @@ README.md
 .env.production.local
 dist
 public
-src
-index.html
 .DS_Store
 *.log
