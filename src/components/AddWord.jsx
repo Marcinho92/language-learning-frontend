@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl, buildApiUrlWithParams, API_CONFIG } from '../config/api';
 import {
   Container,
   Typography,
@@ -29,8 +30,6 @@ const AddWord = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -46,7 +45,7 @@ const AddWord = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/words`, {
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.CREATE), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

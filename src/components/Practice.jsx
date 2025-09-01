@@ -14,6 +14,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Mic as MicIcon, MicOff as MicOffIcon } from '@mui/icons-material';
+import { buildApiUrl, buildApiUrlWithParams, API_CONFIG } from '../config/api';
 
 const LANGUAGES = [
   { value: 'polski', label: 'Polski' },
@@ -53,8 +54,6 @@ const Practice = () => {
 
   // Stan dla zwijania/rozwijania generatora
   const [isGeneratorExpanded, setIsGeneratorExpanded] = useState(false);
-
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -137,7 +136,7 @@ const Practice = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/practice/generate`, {
+      const response = await fetch(buildApiUrl(API_CONFIG.PRACTICE.GENERATE), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -168,7 +167,7 @@ const Practice = () => {
     setVerifyLoading(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/practice/verify`, {
+      const response = await fetch(buildApiUrl(API_CONFIG.PRACTICE.VERIFY), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

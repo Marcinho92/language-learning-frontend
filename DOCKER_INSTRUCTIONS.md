@@ -36,7 +36,7 @@ docker-compose down
 Edytuj plik `docker-compose.yml` i zmień zmienną środowiskową:
 ```yaml
 environment:
-  - REACT_APP_API_URL=http://localhost:8080  # lub inny URL
+  - GATEWAY_API_URL=http://localhost:8080  # lub inny URL
 ```
 
 ### Porty
@@ -49,7 +49,7 @@ environment:
 
 ### Problem z komunikacją z backendem
 1. Sprawdź czy backend działa na porcie 8080
-2. Sprawdź czy URL w `REACT_APP_API_URL` jest poprawny
+2. Sprawdź czy URL w `GATEWAY_API_URL` jest poprawny
 3. Sprawdź logi: `docker-compose logs frontend`
 
 ### Problem z pustą listą słów

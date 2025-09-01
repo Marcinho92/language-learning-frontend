@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { buildApiUrl, buildApiUrlWithParams, API_CONFIG } from '../config/api';
 import {
   Container,
   Typography,
@@ -33,8 +34,6 @@ const EditWord = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
-
   useEffect(() => {
     fetchWord();
   }, [id]);
@@ -42,7 +41,7 @@ const EditWord = () => {
   const fetchWord = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${apiUrl}/api/words/${id}`);
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.GET_BY_ID(id)));
       if (response.ok) {
         const data = await response.json();
         setWord(data);
@@ -81,7 +80,7 @@ const EditWord = () => {
     setSaving(true);
 
     try {
-      const response = await fetch(`${apiUrl}/api/words/${id}`, {
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.UPDATE(id)), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +116,7 @@ const EditWord = () => {
 
     try {
       setSaving(true);
-      const response = await fetch(`${apiUrl}/api/words/${id}`, {
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.DELETE(id)), {
         method: 'DELETE',
       });
 

@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, VolumeUp as VolumeUpIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl, buildApiUrlWithParams, API_CONFIG } from '../config/api';
 
 const GrammarPractice = () => {
   const [currentPractice, setCurrentPractice] = useState(null);
@@ -28,8 +29,6 @@ const GrammarPractice = () => {
   const [wordDetailsExpanded, setWordDetailsExpanded] = useState(false);
   const navigate = useNavigate();
 
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
-
   const fetchRandomGrammarPractice = async () => {
     try {
       setLoading(true);
@@ -37,7 +36,7 @@ const GrammarPractice = () => {
       setResult(null);
       setUserSentence('');
       
-      const response = await fetch(`${apiUrl}/api/words/grammar-practice`);
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.GRAMMAR_PRACTICE));
       
       if (response.ok) {
         const data = await response.json();
@@ -63,7 +62,7 @@ const GrammarPractice = () => {
 
     try {
       setSubmitting(true);
-      const response = await fetch(`${apiUrl}/api/words/grammar-practice/validate`, {
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.GRAMMAR_VALIDATE), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

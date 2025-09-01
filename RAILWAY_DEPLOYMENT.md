@@ -9,10 +9,10 @@
 ## Krok 1: Przygotowanie kodu
 
 ### 1.1 Sprawdź plik `.env` dla produkcji
-Upewnij się, że w kodzie jest fallback dla URL backendu:
+Upewnij się, że w kodzie jest fallback dla URL API Gateway:
 
 ```javascript
-const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
+const apiUrl = process.env.GATEWAY_API_URL || 'https://api-gateway-production-1b48.up.railway.app';
 ```
 
 ### 1.2 Sprawdź `package.json`
@@ -45,8 +45,8 @@ W projekcie Railway:
 
 1. Przejdź do zakładki **"Variables"**
 2. Dodaj zmienną środowiskową:
-   - **Key**: `REACT_APP_API_URL`
-   - **Value**: `https://language-learning-backend-production-3ce3.up.railway.app`
+   - **Key**: `GATEWAY_API_URL`
+   - **Value**: `https://api-gateway-production-1b48.up.railway.app`
 
 ### 2.3 Skonfiguruj domenę (opcjonalnie)
 
@@ -85,7 +85,7 @@ W projekcie Railway:
 
 ### Problem: Błąd 404 na endpointach API
 **Rozwiązanie:**
-- Sprawdź czy `REACT_APP_API_URL` jest poprawnie ustawiony
+- Sprawdź czy `GATEWAY_API_URL` jest poprawnie ustawiony
 - Upewnij się, że backend działa na podanym URL
 - Sprawdź czy backend ma włączone CORS
 
@@ -153,7 +153,7 @@ language-learning-frontend/
 
 Po wdrożeniu będziesz mieć:
 - **Frontend**: `https://your-project-name.railway.app`
-- **Backend**: `https://language-learning-backend-production-3ce3.up.railway.app`
+- **API Gateway**: `https://api-gateway-production-1b48.up.railway.app`
 
 ## Wsparcie
 

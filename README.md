@@ -53,7 +53,7 @@ Frontend aplikacji do nauki języków obcych z obsługą nowych funkcjonalności
 
 ### Environment Variables
 ```bash
-REACT_APP_API_URL=https://language-learning-backend-production-3ce3.up.railway.app
+GATEWAY_API_URL=https://api-gateway-production-1b48.up.railway.app
 ```
 
 ### Cache Configuration

@@ -42,6 +42,7 @@ import {
   ExpandLess as ExpandLessIcon,
   Refresh as RefreshIcon
 } from '@mui/icons-material';
+import { buildApiUrl, buildApiUrlWithParams, API_CONFIG } from '../config/api';
 
 const WordList = () => {
   const [words, setWords] = useState([]);
@@ -66,8 +67,6 @@ const WordList = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
-
   useEffect(() => {
     fetchWordsPaginated();
   }, [page, rowsPerPage, sortConfig, filters]);
@@ -75,59 +74,47 @@ const WordList = () => {
   // Funkcja do pobierania słów z nowego endpointu paginacji
   const fetchWordsPaginated = async () => {
     try {
-      setError('');
       setLoading(true);
       
-      // Jeśli rowsPerPage === -1, pobierz wszystkie słowa bez paginacji
-      if (rowsPerPage === -1) {
-        const allWords = await fetchAllWords();
-        setWords(allWords);
-        setTotalElements(allWords.length);
-        setTotalPages(1);
-        setLoading(false);
-        return;
-      }
-      
-      // Parametry dla nowego API
       const params = new URLSearchParams({
         page: page.toString(),
         size: rowsPerPage.toString(),
-        sortBy: sortConfig.key || 'id',
-        sortDir: sortConfig.direction || 'asc'
+        sortBy: sortConfig.key,
+        sortDir: sortConfig.direction,
+        language: filters.language,
+        search: filters.search
       });
-
-      // Dodaj filtry językowe jeśli są ustawione
-      if (filters.language) {
-        params.append('language', filters.language);
-      }
-
-      // Dodaj wyszukiwanie jeśli jest ustawione
-      if (filters.search) {
-        params.append('search', filters.search);
-      }
-
-      const apiEndpoint = `${apiUrl}/api/words/paginated?${params.toString()}`;
+      
+      const apiEndpoint = buildApiUrlWithParams(API_CONFIG.WORDS.PAGINATED, {
+        page,
+        size: rowsPerPage,
+        sortBy: sortConfig.key,
+        sortDir: sortConfig.direction,
+        language: filters.language,
+        search: filters.search
+      });
       
       const response = await fetch(apiEndpoint);
       
       if (response.ok) {
         const data = await response.json();
         
-        // Obsługa nowej struktury odpowiedzi z paginacją
-        if (data.content) {
-          // Nowy format z paginacją
-          setWords(data.content);
-          setTotalElements(data.totalElements);
-          setTotalPages(data.totalPages);
+        if (rowsPerPage === -1) {
+          // Pobierz wszystkie słowa
+          const allWords = await fetchAllWords();
+          setWords(allWords);
+          setTotalElements(allWords.length);
+          setTotalPages(Math.ceil(allWords.length / 20)); // Domyślny rozmiar strony
         } else {
-          // Fallback dla starego formatu
-          setWords(data);
-          setTotalElements(data.length);
-          setTotalPages(Math.ceil(data.length / rowsPerPage));
+          // Użyj danych z paginacji
+          setWords(data.content || data);
+          setTotalElements(data.totalElements || data.length);
+          setTotalPages(data.totalPages || Math.ceil((data.totalElements || data.length) / rowsPerPage));
         }
       } else {
         const errorData = await response.json();
-        setError(errorData.message || 'Failed to fetch words');
+        console.error('Error fetching words:', errorData);
+        setError('Failed to fetch words');
       }
     } catch (error) {
       console.error('Error fetching words:', error);
@@ -147,101 +134,100 @@ const WordList = () => {
   // Funkcja do pobierania wszystkich słów (dla eksportu CSV)
   const fetchAllWords = async () => {
     try {
-      const response = await fetch(`${apiUrl}/api/words`);
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.LIST));
       
       if (response.ok) {
         const data = await response.json();
         return data;
       } else {
-        throw new Error('Failed to fetch all words');
+        console.error('Error fetching all words');
+        return [];
       }
     } catch (error) {
       console.error('Error fetching all words:', error);
-      throw error;
+      return [];
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this word?')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${apiUrl}/api/words/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        const updatedWords = words.filter(word => word.id !== id);
-        setWords(updatedWords);
-        setSelectedWords(selectedWords.filter(wordId => wordId !== id));
-        setExpandedWords(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(id);
-          return newSet;
+    if (window.confirm('Are you sure you want to delete this word?')) {
+      try {
+        const response = await fetch(buildApiUrl(API_CONFIG.WORDS.DELETE(id)), {
+          method: 'DELETE'
         });
         
-        // Sprawdź czy po usunięciu słowa strona jest pusta i czy istnieją następne strony
-        if (updatedWords.length === 0 && page < totalPages - 1) {
-          setPage(page + 1);  // Przejdź do następnej strony
-        } else if (updatedWords.length === 0 && page > 0) {
-          setPage(page - 1);  // Jeśli nie ma następnej strony, wróć do poprzedniej
+        if (response.ok) {
+          const updatedWords = words.filter(word => word.id !== id);
+          setWords(updatedWords);
+          setSelectedWords(selectedWords.filter(wordId => wordId !== id));
+          setExpandedWords(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(id);
+            return newSet;
+          });
+
+          // Sprawdź czy po usunięciu słowa strona jest pusta i czy istnieją następne strony
+          if (updatedWords.length === 0 && page < totalPages - 1) {
+            setPage(page + 1);  // Przejdź do następnej strony
+          } else if (updatedWords.length === 0 && page > 0) {
+            setPage(page - 1);  // Jeśli nie ma następnej strony, wróć do poprzedniej
+          } else {
+            // Aktualizuj totalElements po usunięciu słowa
+            setTotalElements(prev => Math.max(0, prev - 1));
+          }
         } else {
-          // Aktualizuj totalElements po usunięciu słowa
-          setTotalElements(prev => Math.max(0, prev - 1));
+          const errorData = await response.json();
+          alert(errorData.message || 'Failed to delete word');
         }
-        
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to delete word');
+      } catch (error) {
+        console.error('Error deleting word:', error);
+        alert('Failed to delete word');
       }
-    } catch (error) {
-      console.error('Error deleting word:', error);
-      setError('Failed to delete word');
     }
   };
 
   const handleBulkDelete = async () => {
-    if (selectedWords.length === 0) return;
-    
-    if (!window.confirm(`Are you sure you want to delete ${selectedWords.length} selected words?`)) {
+    if (selectedWords.length === 0) {
+      alert('Please select words to delete');
       return;
     }
 
-    try {
-      const response = await fetch(`${apiUrl}/api/words/bulk`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(selectedWords),
-      });
+    if (window.confirm(`Are you sure you want to delete ${selectedWords.length} words?`)) {
+      try {
+        const response = await fetch(buildApiUrl(API_CONFIG.WORDS.BULK_DELETE), {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ wordIds: selectedWords })
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          const updatedWords = words.filter(word => !selectedWords.includes(word.id));
+          setWords(updatedWords);
+          setSelectedWords([]);
+          setExpandedWords(new Set());
 
-      if (response.ok) {
-        const result = await response.json();
-        const updatedWords = words.filter(word => !selectedWords.includes(word.id));
-        setWords(updatedWords);
-        setSelectedWords([]);
-        setExpandedWords(new Set());
-        
-        // Sprawdź czy po usunięciu słów strona jest pusta i czy istnieją następne strony
-        if (updatedWords.length === 0 && page < totalPages - 1) {
-          setPage(page + 1);  // Przejdź do następnej strony
-        } else if (updatedWords.length === 0 && page > 0) {
-          setPage(page - 1);  // Jeśli nie ma następnej strony, wróć do poprzedniej
+          // Sprawdź czy po usunięciu słów strona jest pusta i czy istnieją następne strony
+          if (updatedWords.length === 0 && page < totalPages - 1) {
+            setPage(page + 1);  // Przejdź do następnej strony
+          } else if (updatedWords.length === 0 && page > 0) {
+            setPage(page - 1);  // Jeśli nie ma następnej strony, wróć do poprzedniej
+          } else {
+            // Aktualizuj totalElements po usunięciu słów
+            setTotalElements(prev => Math.max(0, prev - selectedWords.length));
+          }
+
+          alert(`Successfully deleted ${result.deletedCount} words!`);
         } else {
-          // Aktualizuj totalElements po usunięciu słów
-          setTotalElements(prev => Math.max(0, prev - selectedWords.length));
+          const errorData = await response.json();
+          alert(errorData.message || 'Failed to delete words');
         }
-        
-        alert(`Successfully deleted ${result.deletedCount} words!`);
-      } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to delete words');
+      } catch (error) {
+        console.error('Error bulk deleting words:', error);
+        alert('Failed to delete words');
       }
-    } catch (error) {
-      console.error('Error bulk deleting words:', error);
-      setError('Failed to delete words');
     }
   };
 
@@ -381,83 +367,67 @@ const WordList = () => {
 
   const exportToCSV = async () => {
     try {
-      // Pobierz wszystkie słowa dla eksportu (ignoruje paginację)
       const allWords = await fetchAllWords();
       
-      const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage', 'Explanation'];
+      if (allWords.length === 0) {
+        alert('No words to export');
+        return;
+      }
+
+      const headers = ['ID', 'Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage', 'Explanation'];
       const csvContent = [
         headers.join(','),
         ...allWords.map(word => [
-          `"${word.originalWord}"`,
-          `"${word.translation}"`,
-          `"${getLanguageLabel(word.language)}"`,
-          word.proficiencyLevel,
+          word.id,
+          `"${word.originalWord || ''}"`,
+          `"${word.translation || ''}"`,
+          `"${word.language || ''}"`,
+          word.proficiencyLevel || 1,
           `"${word.exampleUsage || ''}"`,
           `"${word.explanation || ''}"`
         ].join(','))
       ].join('\n');
-      
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'words.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `words_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (error) {
-      console.error('Export error:', error);
-      alert('Export failed: ' + error.message);
+      console.error('Error exporting CSV:', error);
+      alert('Export failed');
     }
   };
 
-  const importFromCSV = (event) => {
+  const importFromCSV = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target.result;
-      const lines = text.split('\n');
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-      
-      const words = lines.slice(1).filter(line => line.trim()).map(line => {
-        const values = parseCsvLine(line);
-        return {
-          originalWord: values[0] || '',
-          translation: values[1] || '',
-          language: values[2]?.toLowerCase() || 'english',
-          proficiencyLevel: parseInt(values[3]) || 1,
-          exampleUsage: values[4] || '',
-          explanation: values[5] || ''
-        };
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.IMPORT_CSV), {
+        method: 'POST',
+        body: formData
       });
 
-      try {
-        // Use bulk import endpoint instead of individual requests
-        const response = await fetch(`${apiUrl}/api/words/bulk`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(words),
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          fetchWordsPaginated(); // Refresh the list
-          alert(`Import completed successfully! ${result.importedCount} words imported.`);
-        } else {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Failed to import words');
-        }
-      } catch (error) {
-        console.error('Import error:', error);
-        alert('Import failed: ' + error.message);
+      if (response.ok) {
+        const result = await response.json();
+        fetchWordsPaginated(); // Refresh the list
+        alert(`Import completed successfully! ${result.importedCount} words imported.`);
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Import failed');
       }
-    };
-    reader.readAsText(file);
+    } catch (error) {
+      console.error('Error importing CSV:', error);
+      alert('Import failed');
+    }
   };
 
   const renderMobileWordCard = (word) => {

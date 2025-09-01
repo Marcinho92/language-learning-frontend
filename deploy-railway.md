@@ -14,8 +14,8 @@
 ## Krok 3: Konfiguracja
 1. W projekcie Railway przejdź do **"Variables"**
 2. Dodaj zmienne:
-   - **Key**: `REACT_APP_API_URL`
-   - **Value**: `https://language-learning-backend-production-3ce3.up.railway.app`
+   - **Key**: `GATEWAY_API_URL`
+   - **Value**: `https://api-gateway-production-1b48.up.railway.app`
    
    - **Key**: `PORT`
    - **Value**: `3000`

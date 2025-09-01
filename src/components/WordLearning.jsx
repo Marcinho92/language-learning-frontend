@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { VolumeUp as VolumeUpIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { buildApiUrl, buildApiUrlWithParams, API_CONFIG } from '../config/api';
 
 const WordLearning = () => {
   const [currentWord, setCurrentWord] = useState(null);
@@ -28,8 +29,6 @@ const WordLearning = () => {
     language: ''
   });
   const navigate = useNavigate();
-
-  const apiUrl = process.env.REACT_APP_API_URL || 'https://language-learning-backend-production-3ce3.up.railway.app';
 
   const fetchRandomWord = async () => {
     try {
@@ -45,7 +44,10 @@ const WordLearning = () => {
       // Dodaj timestamp aby wymusić nowe pobieranie (zapobiega cache'owaniu)
       queryParams.append('_t', Date.now());
       
-      const response = await fetch(`${apiUrl}/api/words/random?${queryParams}`);
+      const response = await fetch(buildApiUrlWithParams(API_CONFIG.WORDS.RANDOM, {
+        language: filters.language,
+        _t: Date.now()
+      }));
       
       if (response.ok) {
         const data = await response.json();
@@ -83,7 +85,7 @@ const WordLearning = () => {
 
     try {
       setLoading(true);
-      const response = await fetch(`${apiUrl}/api/words/${currentWord.id}/check`, {
+      const response = await fetch(buildApiUrl(API_CONFIG.WORDS.CHECK(currentWord.id)), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +99,7 @@ const WordLearning = () => {
       // Jeśli odpowiedź jest poprawna, zaktualizuj poziom biegłości
       if (data.correct) {
         // Pobierz zaktualizowane słowo z nowym poziomem biegłości
-        const updatedWordResponse = await fetch(`${apiUrl}/api/words/${currentWord.id}`);
+        const updatedWordResponse = await fetch(buildApiUrl(API_CONFIG.WORDS.GET_BY_ID(currentWord.id)));
         if (updatedWordResponse.ok) {
           const updatedWord = await updatedWordResponse.json();
           setCurrentWord(updatedWord);
