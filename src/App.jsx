@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, Component } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Container, CssBaseline, Alert, Box, Typography, CircularProgress } from '@mui/material';
 import Navigation from './components/Navigation.jsx';
@@ -11,7 +11,7 @@ const AddWord = lazy(() => import('./components/AddWord.jsx'));
 const EditWord = lazy(() => import('./components/EditWord.jsx'));
 const Practice = lazy(() => import('./components/Practice'));
 
-class ErrorBoundary extends React.Component {
+class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null };
