@@ -11,7 +11,9 @@ import {
   MenuItem,
   TextField,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Collapse,
+  IconButton
 } from '@mui/material';
 import { ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon, Mic as MicIcon, MicOff as MicOffIcon } from '@mui/icons-material';
 import { buildApiUrl, buildApiUrlWithParams, API_CONFIG } from '../config/api';
