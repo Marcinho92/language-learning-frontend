@@ -40,8 +40,17 @@ const GrammarPractice = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setCurrentPractice(data);
-        setError('');
+        
+        // Sprawdź czy baza danych jest pusta
+        if (data.word === null && data.feedback && data.explanation) {
+          // Baza jest pusta - ustaw error z informacją z API
+          setError(data.feedback);
+          setCurrentPractice(null);
+        } else {
+          // Normalne dane - ustaw currentPractice
+          setCurrentPractice(data);
+          setError('');
+        }
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to fetch grammar practice');
@@ -58,7 +67,7 @@ const GrammarPractice = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!currentPractice || !userSentence.trim()) return;
+    if (!currentPractice || !currentPractice.word || !userSentence.trim()) return;
 
     try {
       setSubmitting(true);
@@ -166,7 +175,7 @@ const GrammarPractice = () => {
         </Alert>
       )}
 
-      {currentPractice && (
+      {currentPractice && currentPractice.word && (
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Typography variant="h6" component="div" sx={{ mb: 2 }}>
@@ -238,7 +247,7 @@ const GrammarPractice = () => {
       )}
 
       {/* Grammar Explanation - always visible */}
-      {currentPractice && (
+      {currentPractice && currentPractice.word && (
         <Paper sx={{ p: 3, mb: 3 }}>
           <Typography variant="h6" gutterBottom>
             Grammar Explanation
@@ -357,6 +366,26 @@ const GrammarPractice = () => {
           <Button
             variant="contained"
             onClick={() => navigate('/add')}
+          >
+            Add Words
+          </Button>
+        </Paper>
+      )}
+
+      {!currentPractice && error && (
+        <Paper sx={{ p: 3, textAlign: 'center' }}>
+          <Alert severity="info" sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              {error}
+            </Typography>
+            <Typography variant="body1">
+              Aby rozpocząć ćwiczenia gramatyczne, musisz najpierw dodać słowa do bazy danych.
+            </Typography>
+          </Alert>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/add')}
+            size="large"
           >
             Add Words
           </Button>
