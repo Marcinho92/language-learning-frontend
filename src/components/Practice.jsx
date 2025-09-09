@@ -148,7 +148,7 @@ const Practice = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const text = data.text || data;
+        const text = data.exerciseText || data.text || data;
         setExerciseText(text);
       } else {
         const errorData = await response.json();
