@@ -9,6 +9,5 @@ README.md
 .env.test.local
 .env.production.local
 dist
-public
 .DS_Store
 *.log

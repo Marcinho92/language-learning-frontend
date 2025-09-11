@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  root: '.',
+  publicDir: 'public',
   server: {
     port: process.env.PORT || 3000,
     host: '0.0.0.0'
@@ -16,7 +18,6 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
     rollupOptions: {
-      input: 'index.html',
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
