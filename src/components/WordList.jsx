@@ -418,16 +418,26 @@ const WordList = () => {
 
       if (response.ok) {
         const result = await response.json();
-        fetchWordsPaginated(); // Refresh the list
-        alert(`Import completed successfully! ${result.importedCount} words imported.`);
+        console.log('Import response:', result); // Debug log
+        
+        // Refresh the list immediately
+        await fetchWordsPaginated();
+        
+        // Show success message with imported count
+        const importedCount = result.importedCount || result.count || 'unknown';
+        alert(`Import completed successfully! ${importedCount} words imported.`);
       } else {
         const errorData = await response.json();
+        console.error('Import error:', errorData); // Debug log
         alert(errorData.message || 'Import failed');
       }
     } catch (error) {
       console.error('Error importing CSV:', error);
       alert('Import failed');
     }
+    
+    // Reset file input
+    event.target.value = '';
   };
 
   const renderMobileWordCard = (word) => {
