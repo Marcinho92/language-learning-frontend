@@ -97,7 +97,18 @@ const WordList = () => {
       const response = await fetch(apiEndpoint);
       
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = {};
+        
+        if (responseText.trim()) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in fetchWordsPaginated:', parseError);
+            setError('Failed to parse response from server');
+            return;
+          }
+        }
         
         if (rowsPerPage === -1) {
           // Pobierz wszystkie słowa
@@ -112,7 +123,17 @@ const WordList = () => {
           setTotalPages(data.totalPages || Math.ceil((data.totalElements || data.length) / rowsPerPage));
         }
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to fetch words' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         console.error('Error fetching words:', errorData);
         setError('Failed to fetch words');
       }
@@ -137,7 +158,18 @@ const WordList = () => {
       const response = await fetch(buildApiUrl(API_CONFIG.WORDS.LIST));
       
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = [];
+        
+        if (responseText.trim()) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in fetchAllWords:', parseError);
+            return [];
+          }
+        }
+        
         return data;
       } else {
         console.error('Error fetching all words');
@@ -176,7 +208,17 @@ const WordList = () => {
             setTotalElements(prev => Math.max(0, prev - 1));
           }
         } else {
-          const errorData = await response.json();
+          const errorText = await response.text();
+          let errorData = { message: 'Failed to delete word' };
+          
+          if (errorText.trim()) {
+            try {
+              errorData = JSON.parse(errorText);
+            } catch (parseError) {
+              console.error('Error parsing error response:', parseError);
+            }
+          }
+          
           alert(errorData.message || 'Failed to delete word');
         }
       } catch (error) {
@@ -203,7 +245,18 @@ const WordList = () => {
         });
         
         if (response.ok) {
-          const result = await response.json();
+          const responseText = await response.text();
+          let result = { deletedCount: selectedWords.length };
+          
+          if (responseText.trim()) {
+            try {
+              result = JSON.parse(responseText);
+            } catch (parseError) {
+              console.error('JSON parse error in handleBulkDelete:', parseError);
+              console.log('Response was not valid JSON, using default result');
+            }
+          }
+          
           const updatedWords = words.filter(word => !selectedWords.includes(word.id));
           setWords(updatedWords);
           setSelectedWords([]);
@@ -221,7 +274,17 @@ const WordList = () => {
 
           alert(`Successfully deleted ${result.deletedCount} words!`);
         } else {
-          const errorData = await response.json();
+          const errorText = await response.text();
+          let errorData = { message: 'Failed to delete words' };
+          
+          if (errorText.trim()) {
+            try {
+              errorData = JSON.parse(errorText);
+            } catch (parseError) {
+              console.error('Error parsing error response:', parseError);
+            }
+          }
+          
           alert(errorData.message || 'Failed to delete words');
         }
       } catch (error) {
