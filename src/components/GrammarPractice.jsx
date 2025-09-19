@@ -39,7 +39,18 @@ const GrammarPractice = () => {
       const response = await fetch(buildApiUrl(API_CONFIG.WORDS.GRAMMAR_PRACTICE));
       
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = {};
+        
+        if (responseText.trim()) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in fetchGrammarPractice:', parseError);
+            setError('Failed to parse response from server');
+            return;
+          }
+        }
         
         // Sprawdź czy baza danych jest pusta
         if (data.word === null && data.feedback && data.explanation) {
@@ -52,7 +63,17 @@ const GrammarPractice = () => {
           setError('');
         }
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to fetch grammar practice' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setError(errorData.message || 'Failed to fetch grammar practice');
         setCurrentPractice(null);
       }
@@ -83,7 +104,23 @@ const GrammarPractice = () => {
         }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data = {};
+      
+      if (responseText.trim()) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error in handleSubmit:', parseError);
+          setResult({ 
+            isCorrect: false, 
+            feedback: 'Failed to parse response from server',
+            explanation: 'Please try again.'
+          });
+          return;
+        }
+      }
+      
       setResult(data);
     } catch (error) {
       console.error('Error validating grammar practice:', error);

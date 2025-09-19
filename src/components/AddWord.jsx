@@ -69,7 +69,17 @@ const AddWord = () => {
           navigate('/words');
         }, 2000);
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to add word' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setError(errorData.message || 'Failed to add word');
       }
     } catch (error) {

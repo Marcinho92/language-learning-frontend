@@ -147,11 +147,33 @@ const Practice = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = {};
+        
+        if (responseText.trim()) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in generateExerciseText:', parseError);
+            setError('Failed to parse response from server');
+            return;
+          }
+        }
+        
         const text = data.exerciseText || data.text || data;
         setExerciseText(text);
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to generate exercise text' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setError(errorData.message || 'Failed to generate exercise text');
       }
     } catch (error) {
@@ -183,10 +205,32 @@ const Practice = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = {};
+        
+        if (responseText.trim()) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in handleVerifySubmit:', parseError);
+            setVerifyError('Failed to parse response from server');
+            return;
+          }
+        }
+        
         setVerifyResult(data);
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to verify translation' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setVerifyError(errorData.message || 'Failed to verify translation');
       }
     } catch (error) {

@@ -43,7 +43,19 @@ const EditWord = () => {
       setLoading(true);
       const response = await fetch(buildApiUrl(API_CONFIG.WORDS.GET_BY_ID(id)));
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = {};
+        
+        if (responseText.trim()) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in fetchWord:', parseError);
+            setError('Failed to parse response from server');
+            return;
+          }
+        }
+        
         setWord(data);
         setFormData({
           originalWord: data.originalWord || '',
@@ -54,7 +66,17 @@ const EditWord = () => {
           proficiencyLevel: data.proficiencyLevel || 1
         });
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Word not found' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setError(errorData.message || 'Word not found');
       }
     } catch (error) {
@@ -89,7 +111,19 @@ const EditWord = () => {
       });
 
       if (response.ok) {
-        const updatedWord = await response.json();
+        const responseText = await response.text();
+        let updatedWord = {};
+        
+        if (responseText.trim()) {
+          try {
+            updatedWord = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in handleSubmit:', parseError);
+            setError('Failed to parse response from server');
+            return;
+          }
+        }
+        
         setWord(updatedWord);
         setSuccess('Word updated successfully!');
         
@@ -98,7 +132,17 @@ const EditWord = () => {
           navigate('/words');
         }, 2000);
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to update word' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setError(errorData.message || 'Failed to update word');
       }
     } catch (error) {
@@ -124,7 +168,17 @@ const EditWord = () => {
         // Przekieruj do listy słów
         navigate('/words');
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to delete word' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setError(errorData.message || 'Failed to delete word');
       }
     } catch (error) {

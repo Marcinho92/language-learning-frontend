@@ -50,7 +50,19 @@ const WordLearning = () => {
       }));
       
       if (response.ok) {
-        const data = await response.json();
+        const responseText = await response.text();
+        let data = {};
+        
+        if (responseText.trim()) {
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON parse error in fetchRandomWord:', parseError);
+            setError('Failed to parse response from server');
+            return;
+          }
+        }
+        
         if (data.isEmpty) {
           setCurrentWord(null);
           setError(data.message || 'Baza słów jest pusta. Dodaj słowa, aby rozpocząć naukę.');
@@ -66,7 +78,17 @@ const WordLearning = () => {
           // clearCacheByPattern(`/api/words/${data.id}`); // Removed as per edit hint
         }
       } else {
-        const errorData = await response.json();
+        const errorText = await response.text();
+        let errorData = { message: 'Failed to fetch random word' };
+        
+        if (errorText.trim()) {
+          try {
+            errorData = JSON.parse(errorText);
+          } catch (parseError) {
+            console.error('Error parsing error response:', parseError);
+          }
+        }
+        
         setError(errorData.message || 'Failed to fetch random word');
         setCurrentWord(null);
       }
@@ -93,7 +115,22 @@ const WordLearning = () => {
         body: JSON.stringify({ translation: translation.trim() }),
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      let data = {};
+      
+      if (responseText.trim()) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON parse error in handleSubmit:', parseError);
+          setResult({ 
+            correct: false, 
+            message: 'Failed to parse response from server' 
+          });
+          return;
+        }
+      }
+      
       setResult(data);
       
       // Jeśli odpowiedź jest poprawna, zaktualizuj poziom biegłości
@@ -101,7 +138,18 @@ const WordLearning = () => {
         // Pobierz zaktualizowane słowo z nowym poziomem biegłości
         const updatedWordResponse = await fetch(buildApiUrl(API_CONFIG.WORDS.GET_BY_ID(currentWord.id)));
         if (updatedWordResponse.ok) {
-          const updatedWord = await updatedWordResponse.json();
+          const responseText = await updatedWordResponse.text();
+          let updatedWord = {};
+          
+          if (responseText.trim()) {
+            try {
+              updatedWord = JSON.parse(responseText);
+            } catch (parseError) {
+              console.error('JSON parse error in fetchUpdatedWord:', parseError);
+              return;
+            }
+          }
+          
           setCurrentWord(updatedWord);
           
           // Wyczyść cache dla listy słów aby odzwierciedlić zmiany
