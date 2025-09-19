@@ -483,38 +483,16 @@ const WordList = () => {
       console.log('Import response headers:', response.headers);
 
       if (response.ok) {
-        // Check if response has content
-        const responseText = await response.text();
-        console.log('Import response text:', responseText);
-        
-        let result = {};
-        if (responseText.trim()) {
-          try {
-            result = JSON.parse(responseText);
-            console.log('Import response parsed:', result);
-          } catch (parseError) {
-            console.error('JSON parse error:', parseError);
-            console.log('Response was not valid JSON, treating as success');
-          }
-        }
+        console.log('Import successful, refreshing word list...');
         
         // Refresh the list immediately
         await fetchWordsPaginated();
         
-        // Show success message with imported count
-        const importedCount = result.importedCount || result.count || 'unknown';
-        alert(`Import completed successfully! ${importedCount} words imported.`);
+        // Show success message
+        alert('Import completed successfully! The word list has been refreshed.');
       } else {
-        // Try to parse error response
-        try {
-          const errorText = await response.text();
-          const errorData = errorText ? JSON.parse(errorText) : { message: 'Import failed' };
-          console.error('Import error:', errorData);
-          alert(errorData.message || 'Import failed');
-        } catch (parseError) {
-          console.error('Error parsing error response:', parseError);
-          alert('Import failed');
-        }
+        console.error('Import failed with status:', response.status);
+        alert('Import failed. Please check your file format and try again.');
       }
     } catch (error) {
       console.error('Error importing CSV:', error);
