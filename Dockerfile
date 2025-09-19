@@ -10,8 +10,13 @@ COPY package*.json ./
 # Zainstaluj wszystkie zależności (w tym devDependencies potrzebne do build)
 RUN npm ci
 
-# Kopiuj wszystkie pliki źródłowe
-COPY . .
+# Kopiuj pliki konfiguracyjne
+COPY vite.config.js ./
+COPY index.html ./
+
+# Kopiuj katalogi źródłowe
+COPY src/ ./src/
+COPY public/ ./public/
 
 # Zbuduj aplikację (teraz vite jest dostępny)
 RUN npm run build
