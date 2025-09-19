@@ -13,6 +13,7 @@ RUN npm ci
 # Kopiuj pliki konfiguracyjne
 COPY vite.config.js ./
 COPY index.html ./
+COPY server.js ./
 
 # Kopiuj katalogi źródłowe
 COPY src/ ./src/
