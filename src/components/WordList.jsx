@@ -52,6 +52,7 @@ const WordList = () => {
     language: '',
     search: ''
   });
+  const [searchInput, setSearchInput] = useState('');
   const [sortConfig, setSortConfig] = useState({
     key: 'id',
     direction: 'asc'
@@ -322,11 +323,23 @@ const WordList = () => {
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'search') {
+      setSearchInput(value);
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [name]: value
+      }));
+      setPage(0); // Reset to first page when filters change
+    }
+  };
+
+  const handleSearch = () => {
     setFilters(prev => ({
       ...prev,
-      [name]: value
+      search: searchInput
     }));
-    setPage(0); // Reset to first page when filters change
+    setPage(0); // Reset to first page when search changes
   };
 
   const handleToggleExpand = (wordId) => {
@@ -679,11 +692,24 @@ const WordList = () => {
           <TextField
             label="Search words"
             name="search"
-            value={filters.search}
+            value={searchInput}
             onChange={handleFilterChange}
             size="small"
             sx={{ minWidth: 200 }}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleSearch();
+              }
+            }}
           />
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            size="small"
+            sx={{ minHeight: '40px' }}
+          >
+            Search
+          </Button>
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <InputLabel id="wordlist-language-label">Language</InputLabel>
             <Select
