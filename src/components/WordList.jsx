@@ -450,7 +450,7 @@ const WordList = () => {
         return;
       }
 
-      const headers = ['Original Word', 'Translation', 'Language', 'Proficiency Level', 'Example Usage', 'Explanation'];
+      const headers = ['originalWord', 'translation', 'language', 'proficiencyLevel', 'exampleUsage', 'explanation'];
       const csvContent = [
         headers.join(','),
         ...allWords.map(word => [
